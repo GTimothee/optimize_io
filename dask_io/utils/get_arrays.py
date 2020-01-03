@@ -1,6 +1,6 @@
 """ A list of utility functions for the tests
 
-to be renamed "util.py"
+To be renamed "util.py"
 """
 import dask
 import dask.array as da
@@ -23,18 +23,18 @@ CHUNK_SHAPES_EXP1 = {'slabs_dask_interpol': ('auto', (1210), (1400)),
                     'blocks_previous_exp': (770, 605, 700)}
 
 
-def get_dask_array_from_hdf5(file_path, key, cast=True, logic_cs="auto"):
-    """ Extract a dask array from an hdf5 file using the dataset key.
+def get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto"):
+    """ Extract a dask array from a hdf5 file using the dataset key.
     Dataset key: key of the dataset inside the hdf5 file.
 
     Arguments:
     ----------
         file path: path to hdf5 file (string)
-        key: key of the dictionary to retrieve data
+        dataset_key: key of the dictionary to retrieve data
 
     Options:
     --------
-        cast: To cast the dataset into a dask array. True is default.
+        to_da: To cast the dataset into a dask array. True is default.
             Set it to False if you want to do it yourself (ex for adjusting the chunks).
         logic_cs:  if no physical chunked then should choose a chunks shape. 
             "auto" is automatic ~100MB chunk size.
@@ -62,7 +62,7 @@ def get_dask_array_from_hdf5(file_path, key, cast=True, logic_cs="auto"):
         if not f.keys():
             raise ValueError('No dataset found in the input file. Aborting.')
 
-        if not cast:
+        if not to_da:
             return f[key]
 
         dataset = f[key]
@@ -185,158 +185,6 @@ def save_arr(arr, storage_type, file_path, key='/data', axis=0, chunks_shape=Non
         da.to_npy_stack(os.path.join(file_path, "npy/"), arr, axis=axis)
 
 
-def get_dask_array_chunks_shape(dask_array):
-    t = dask_array.chunks
-    cs = list()
-    for tupl in t:
-        cs.append(tupl[0])
-    return tuple(cs)
-
-
-def configure_dask(config):
-    """ Apply configuration to dask to parameterize the optimization function.
-
-    Arguments:
-    ---------
-        config: A CaseConfig object.
-    """
-    if not config:
-        raise ValueError("Empty configuration object.")
-    manual_config_dask(config.buffer_size, config.opti, sched_opti=scheduler_opti)
-
-
-def manual_config_dask(buffer_size=ONE_GIG, opti=True, sched_opti=True):
-    """ Manual configuration of Dask as opposed to using CaseConfig object.
-
-    Arguments:
-    ----------
-        buffer_size:
-        opti:
-        sched_opti:
-    """
-
-    print('Task graph optimization enabled:', opti)
-    print('Scheduler optimization enabled:', sched_opti)
-
-    opti_funcs = [optimize_func] if opti else list()
-    dask.config.set({
-        'optimizations': opti_funcs,
-        'io-optimizer': {
-            'memory_available': buffer_size,
-            'scheduler_opti': sched_opti
-        }
-    })
-
-
-class CaseConfig():
-    """ Contains the configuration for a test.
-    """
-    def __init__(self, array_filepath, chunks_shape):
-        self.array_filepath = array_filepath
-        self.chunks_shape = chunks_shape
-
-    def optimization(self, opti, scheduler_opti, buffer_size):
-        self.opti = opti 
-        self.scheduler_opti = scheduler_opti
-        self.buffer_size = buffer_size
-
-    def sum_case(self, nb_chunks):
-        self.test_case = 'sum'
-        self.nb_chunks = nb_chunks
-
-    def split_case(self, in_filepath, out_filepath, nb_blocks=None):
-        """
-        nb_blocks: nb_blocks to extract from the original array
-        """
-        self.test_case = 'split'
-        self.in_filepath = in_filepath  # TODO: remove this we already have it as array_filepath
-        self.nb_blocks = nb_blocks if nb_blocks else None
-        if os.path.isfile(out_filepath):
-            os.remove(out_filepath)
-        self.out_filepath = out_filepath
-        # print("split file path stored in config:", self.out_filepath)
-        self.out_file = h5py.File(self.out_filepath, 'w')
-
-    def write_output(self, writer, out_file_path, t):
-        if self.test_case == 'sum':
-            data = [
-                self.opti, 
-                self.scheduler_opti, 
-                self.chunk_shape, 
-                self.nb_chunks, 
-                self.buffer_size, 
-                t,
-                out_file_path
-            ]
-        else:
-            raise ValueError("Unsupported test case.")
-        writer.writerow(data)
-
-
-def flush_cache():
-    os.system('sync; echo 3 | sudo tee /proc/sys/vm/drop_caches')   
-
-
-def get_arr_shapes(arr):
-    """ Routine that returns shape information on from dask array.
-
-    Arguments:
-    ----------
-        arr: dask array
-
-    Returns:
-    --------
-        shape: shape of the dask array
-        chunks: shape of one chunk
-        chunk_dims: number of chunks in eah dimension
-    """
-    shape = arr.shape
-    chunks = tuple([c[0] for c in arr.chunks])
-    chunk_dims = [len(c) for c in arr.chunks]  
-    return shape, chunks, chunk_dims
-
-
-def get_arr_list(arr, nb_chunks=None):
-    """ Return a list of dask arrays. Each dask array being a block of the input array.
-
-    Arguments:
-    ----------
-        arr: dask array
-        nb_chunks: if None then function returns all arrays, else function returns n=nb_chunks arrays
-    """
-    _, chunk_shape, dims = get_arr_shapes(arr)
-    arr_list = list()
-    for i in range(dims[0]):
-        for j in range(dims[1]):
-            for k in range(dims[2]):
-                if (nb_chunks and len(arr_list) < nb_chunks) or not nb_chunks:
-                    upper_corner = (i * chunk_shape[0],
-                                    j * chunk_shape[1],
-                                    k * chunk_shape[2])
-                    arr_list.append(load_array_parts(arr=arr,
-                                                     geometry="right_cuboid",
-                                                     shape=chunk_shape,
-                                                     upper_corner=upper_corner,
-                                                     random=False))
-    return arr_list
-
-
-def sum_chunks(arr, nb_chunks):
-    """ Sum chunks together.
-
-    Arguments:
-    ----------
-        arr: array from which blocks will be sum
-        nb_chunks: number of chunks to sum
-    """
-    
-    arr_list = get_arr_list(arr, nb_chunks)
-    sum_arr = arr_list.pop(0)
-    for a in arr_list:
-        sum_arr = sum_arr + a
-    return sum_arr
-
-
 def get_or_create_array(config, npy_stack_dir=None):
     """ Load or create Dask Array for tests. You can specify a test case too.
 
@@ -377,49 +225,3 @@ def create_random_array():
         shape=(1540, 1210, 1400),
         physik_chunks_shape=None,
         dtype="float16")
-
-
-def get_test_arr(config, npy_stack_dir=None):
-
-    # create the dask array from input file path
-    arr = get_or_create_array(config, npy_stack_dir=npy_stack_dir)
-    
-    # do dask arrays operations for the chosen test case
-    case = getattr(config, 'test_case', None)
-    # print("case in config", case)
-    if case:
-        if case == 'sum':
-            arr = sum_chunks(arr, config.nb_chunks)
-        elif case == 'split':
-            arr = split_array(arr, config.out_file, config.nb_blocks)
-    return arr
-
-
-def split_array(arr, f, nb_blocks=None):
-    """ Split an array given its chunk shape. Output is a hdf5 file with as many datasets as chunks.
-    
-    Arguments:
-    ----------
-        nb_blocks: nb blocks we want to extract
-    """
-    # arr_list = get_arr_list(arr, nb_blocks)
-    datasets = list()
-
-    # for hdf5:
-    """for i, a in enumerate(arr_list):
-        # print("creating dataset in split file -> dataset path: ", '/data' + str(i))
-        # print("storing data of shape", a.shape)
-        datasets.append(f.create_dataset('/data' + str(i), shape=a.shape))
-    return da.store(arr_list, datasets, compute=False)"""
-
-    # for numpy storage
-    return da.to_npy_stack('data/numpy_data', arr, axis=0)
-
-
-def neat_print_graph(graph):
-    for k, v in graph.items():
-        print("\nkey", k)
-        if isinstance(v, dict):
-            for k2, v2 in v.items():
-                print("\nk", k2)
-                print(v2, "\n")
