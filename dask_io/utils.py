@@ -23,27 +23,58 @@ CHUNK_SHAPES_EXP1 = {'slabs_dask_interpol': ('auto', (1210), (1400)),
                     'blocks_previous_exp': (770, 605, 700)}
 
 
-def get_dask_array_from_hdf5(file_path="tests/data/sample.hdf5", cast=True, key='/data', logic_chunks_shape="auto"):
-    """
+def get_dask_array_from_hdf5(file_path, key, cast=True, logic_cs="auto"):
+    """ Extract a dask array from an hdf5 file using the dataset key.
+    Dataset key: key of the dataset inside the hdf5 file.
+
     Arguments:
     ----------
         file path: path to hdf5 file (string)
         key: key of the dictionary to retrieve data
-        cast: if you want to cast the dataset into a dask array.
-            If you want to do it yourself (ex for adjusting the chunks),
-            set this parameter to False.
+
+    Options:
+    --------
+        cast: To cast the dataset into a dask array. True is default.
+            Set it to False if you want to do it yourself (ex for adjusting the chunks).
+        logic_cs:  if no physical chunked then should choose a chunks shape. 
+            "auto" is automatic ~100MB chunk size.
+            "physical" is to set logical chunks the same as physical chunks, if physical chunks.
+
+    Returns: 
+    --------
+        dask array 
     """
-    f = h5py.File(file_path, 'r')
-    if len(list(f.keys())) > 0:
+
+    def check_extension(file_path, ext):
+        if file_path.split('.')[-1] != ext:
+            return False 
+        return True
+
+    def physically_chunked():
+        if dataset.chunks:
+            return True 
+        return False
+
+    if not check_extension(file_path, 'hdf5'):
+        raise ValueError("This is not a hdf5 file.") 
+
+    with h5py.File(file_path, 'r') as f:
+        if not f.keys():
+            raise ValueError('No dataset found in the input file. Aborting.')
+
         if not cast:
             return f[key]
+
         dataset = f[key]
-        if dataset.chunks:  # if dataset is chunked use the same logical chunks shape as physical chunks shape
-            return da.from_array(dataset, chunks=dataset.chunks)
-        else:  # if no physical chunked then should choose a chunks shape, "auto" is automatic ~100MB chunk size
-            return da.from_array(dataset, chunks=logic_chunks_shape)
-    else:
-        print('Key not found. Aborting.')
+
+        if logic_cs == "physical":
+            if physically_chunked:  
+                logic_cs = dataset.chunks
+            else:
+                print("logic_cs set to `physical` but dataset not physically chunked. Using `auto` as logic_cs.")
+                logic_cs = "auto"
+        
+        return da.from_array(dataset, chunks=logic_cs)
 
 
 def load_array_parts(arr, geometry="slabs", nb_elements=0, shape=None, axis=0, random=True, seed=0, upper_corner=(0,0,0), as_numpy=False):
