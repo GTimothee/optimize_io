@@ -22,20 +22,11 @@ def add_to_dict_of_lists(d, k, v, unique=False):
     return d
 
 
-# to be removed
-def get_config_chunk_shape():
-    try:
-        optimization = dask.config.get("io-optimizer")
-        return dask.config.get("io-optimizer.chunk_shape")
-    except BaseException:
-        return (220, 242, 200)
-        
-
 def get_array_block_dims(shape, chunk_shape):
     """ from shape of image and size of chukns=blocks, return the dimensions of the array in terms of blocks
     i.e. number of blocks in each dimension
     """
-    chunks = chunk_shape # get_config_chunk_shape()
+    chunks = chunk_shape 
     logging.debug(f'Chunks for get_array_block_dims: {chunks}')
     if not len(shape) == len(chunks):
         raise ValueError(

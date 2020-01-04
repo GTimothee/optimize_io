@@ -11,23 +11,24 @@ from dask_io.optimizer.modifiers import get_used_proxies
 
 # TODO: make tests with different chunk shapes
 data_dirpath = 'data'
-array_filepath = os.path.join(data_dirpath, 'sample_array_nochunk.hdf5')
+array_filepath = os.path.join(data_dirpath, 'sample_array_nochunk.hdf5')  # shape is (1540, 1210, 1400) 
 log_dir = "dask_io/logs"
 
 
 def get_case_1():
-    """ case 1 : continous blocks
+    """ Create a test case for some test functions.
+    case 1 : continous blocks
     """
-    arr = get_dask_array_from_hdf5(array_filepath, '/data')
-    cs = (220, 240, 200)
-    """dask.config.set({
+    cs = (770, 605, 700)  # 8 Chunks
+    arr = get_dask_array_from_hdf5(array_filepath, '/data', logic_cs=cs)
+    
+    dask.config.set({
         'io-optimizer': {
-            'chunk_shape': (220, 240, 200),
             'memory_available': 4 * ONE_GIG
         }
-    })"""
+    })
 
-    # attention à l'énoncé ci-dessous 
+    # take a block of size half the size of array (4 blocks)
     shape, chunks, blocks_dims = get_arr_shapes(arr)
     _3d_pos = numeric_to_3d_pos(5, blocks_dims, 'C')
     dims = [(_3d_pos[0]+1) * chunks[0],
@@ -40,7 +41,8 @@ def get_case_1():
 
 def test_get_covered_blocks():
     """
-    remainder chunk shape: 220 242 200
+    Remainder: 
+        function to test description: 
     """
     slice_tuple = (slice(0, 225, None), slice(242, 484, None), slice(500, 700, None))
     chunk_shape = (220, 242, 200)
