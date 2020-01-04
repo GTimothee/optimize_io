@@ -1,14 +1,16 @@
 import math
 import sys
+import logging
+
 import dask
 from dask.base import tokenize
+
 import operator
 from operator import getitem
-from tests_utils import get_arr_shapes
-from tests_utils import neat_print_graph, ONE_GIG
-import optimize_io
-from optimize_io.modifiers import add_to_dict_of_lists, get_config_chunk_shape
-import logging
+
+from dask_io.utils.array_utils import get_arr_shapes
+from dask_io.utils.utils import neat_print_graph, ONE_GIG
+from dask_io.optimizer.modifiers import add_to_dict_of_lists, get_config_chunk_shape
 
 
 def apply_clustered_strategy(graph, dicts, chunk_shape):

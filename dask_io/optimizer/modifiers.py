@@ -4,8 +4,7 @@ import collections
 import numpy as np
 import datetime
 import logging
-import optimize_io
-from tests_utils import LOG_TIME
+from dask_io.utils.utils import LOG_TIME
 
 
 def add_to_dict_of_lists(d, k, v, unique=False):
@@ -222,7 +221,7 @@ def get_unused_keys(remade_graph):
 
 def get_used_proxies(graph, use_BFS=True):
     """ go through graph and find the proxies that are used by other tasks
-    proxy: task that getitem directly from original-array
+    proxy: task that use getitem directly on original-array
     """
     if not use_BFS:
         remade_graph = get_graph_from_dask(graph, undirected=False)

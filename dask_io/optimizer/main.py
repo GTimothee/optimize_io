@@ -2,16 +2,15 @@ import os
 import sys
 import math
 import time
-import optimize_io
-from optimize_io.clustered import apply_clustered_strategy
-from optimize_io.modifiers import get_used_proxies, get_array_block_dims
-from tests_utils import LOG_TIME
 import datetime 
 import logging
 
-out_dir = os.environ.get('OUTPUT_DIR')
-logging.basicConfig(filename=os.path.join(out_dir, LOG_TIME + '.log'), level=logging.DEBUG) # to be set to WARNING
+from dask_io.optimizer.clustered import apply_clustered_strategy
+from dask_io.optimizer.modifiers import get_used_proxies, get_array_block_dims
+from dask_io.utils.utils import LOG_TIME
 
+log_dir = 'dask_io/logs'
+logging.basicConfig(filename=os.path.join(log_dir, LOG_TIME + '.log'), level=logging.DEBUG) # to be set to WARNING
 
 DEBUG_MODE = False
 

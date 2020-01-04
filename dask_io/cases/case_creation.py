@@ -1,3 +1,4 @@
+from dask_io.utils.array_utils import get_arr_shapes
 
 
 def get_arr_chunks(arr, nb_chunks=None):

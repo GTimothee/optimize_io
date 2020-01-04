@@ -1,10 +1,18 @@
 import os
 
+from dask_io.utils.utils import CHUNK_SHAPES_EXP1
+from dask_io.utils.array_utils import get_arr_shapes
+from dask_io.utils.get_arrays import get_dask_array_from_hdf5
+
 from dask_io.cases.case_config import CaseConfig
-from dask_io.optimizer import modifiers 
-from modifiers import *
+
+from dask_io.optimizer.modifiers import *
+
 
 # TODO: make tests with different chunk shapes
+data_dirpath = 'data'
+array_filepath = os.path.join(data_dirpath, 'sample_array_nochunk.hdf5')
+log_dir = "dask_io/logs"
 
 
 def test_add_to_dict_of_lists():
@@ -31,42 +39,34 @@ def test_flatten_iterable():
 
 def test_get_graph_from_dask():
     # create config for the test
-    array_filepath = os.path.join('data', 'sample_array_nochunk.hdf5')
-    config = CaseConfig(array_filepath, None)
-    config.sum_case(nb_chunks=2)
-    dask_array = config.get()
+    case = CaseConfig(array_filepath, "auto")
+    case.sum(nb_chunks=2)
+    dask_array = case.get()
 
     # test function
     dask_graph = dask_array.dask.dicts 
     graph = get_graph_from_dask(dask_graph, undirected=False)
-
-    with open('tests/outputs/remade_graph.txt', "w+") as f:
+    with open(os.path.join(log_dir, 'get_graph_from_dask.txt'), "w+") as f:
         for k, v in graph.items():
             f.write("\n\n" + str(k))
             f.write("\n" + str(v))
 
-    for k, v in graph.items():
-        print("\nkey", k)
-        print("value", v)
-
 
 def test_get_used_proxies():
-    array_path = os.path.join(os.getenv('DATA_PATH'), 'sample_array_nochunk.hdf5')
-    
     for chunk_shape_key in list(CHUNK_SHAPES_EXP1.keys()):
-        chunks_shape = CHUNK_SHAPES_EXP1[chunk_shape_key]
+        cs = CHUNK_SHAPES_EXP1[chunk_shape_key]
 
-        new_config = CaseConfig(array_path, chunks_shape)
-        new_config.sum_case(nb_chunks=2)
+        case = CaseConfig(array_filepath, cs)
+        case.sum(nb_chunks=2)
         
         for use_BFS in [True]: #, False]:
-            dask_array = get_test_arr(new_config)
-            cs = get_dask_array_chunks_shape(dask_array)
-            dask.config.set({
+            dask_array = get_dask_array_from_hdf5(case.array_filepath, '/data', to_da=True, logic_cs=cs)
+            
+            """dask.config.set({
                 'io-optimizer': {
                     'chunk_shape': cs
                 }
-            })
+            })"""
 
             # test function
             dask_graph = dask_array.dask.dicts 
@@ -81,8 +81,6 @@ def test_get_used_proxies():
                 s1 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
                 s2 = (slice(cs[0], 2 * cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
 
-            #print(dicts['origarr_to_used_proxies'])
-
             print("\nExpecting:")
             print(s1)
             print(s2)
@@ -92,12 +90,6 @@ def test_get_used_proxies():
             print(slices[1])
 
             assert slices == [s1, s2]
-            """# test proxies indices
-            proxy_indices = list()
-            for l in dicts['origarr_to_used_proxies'].values():
-                for t in l:
-                    proxy_indices.append(tuple(t[1:]))
-            assert set(proxy_indices) == set([(0, 0, 0), (0, 0, 1)])"""
 
 
 def test_BFS():
@@ -163,17 +155,18 @@ def test_BFS_3():
     """ test to include bfs in the program and test with rechunk case
     """
 
-    # get test array with rechunking
-    array_filepath = os.path.join(os.getenv('DATA_PATH'), 'sample_array_nochunk.hdf5')
-    config = CaseConfig(array_filepath, chunks_shape=(770, 605, 700))
-    config.sum_case(nb_chunks=2)
-    dask_array = get_test_arr(config)
-    dask_array.visualize(filename='tests/outputs/img.png', optimize_graph=False)
+    # get test array with logical rechunking
+    chunks_shape = (770, 605, 700)
+
+    case = CaseConfig(array_filepath, chunks_shape)
+    case.sum(nb_chunks=2)
+    dask_array = case.get()
+    # dask_array.visualize(filename='tests/outputs/img.png', optimize_graph=False)
 
     # get formatted graph for processing
     graph = get_graph_from_dask(dask_array.dask.dicts, undirected=False)  # we want a directed graph
 
-    with open('tests/outputs/remade_graph.txt', "w+") as f:
+    with open(os.path.join(log_dir, 'test_BFS_3.txt'), "w+") as f:
         for k, v in graph.items():
             f.write("\n\n" + str(k))
             f.write("\n" + str(v))

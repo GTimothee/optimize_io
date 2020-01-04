@@ -42,23 +42,34 @@ def get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto"
     if not check_extension(file_path, 'hdf5'):
         raise ValueError("This is not a hdf5 file.") 
 
-    with h5py.File(file_path, 'r') as f:
-        if not f.keys():
-            raise ValueError('No dataset found in the input file. Aborting.')
+    f = h5py.File(file_path, 'r')
 
-        if not to_da:
-            return f[key]
+    """
+    >> with h5py.File(file_path, 'r') as f:
+    
+    cannot do the above because it closes the file after 
+    the context but the array has not yet been computed
+    therefore the computation graph contains a "<Closed HDF5 dataset>" 
 
-        dataset = f[key]
+    TODO: The file is not closed however.
+    """
 
-        if logic_cs == "physical":
-            if physically_chunked:  
-                logic_cs = dataset.chunks
-            else:
-                print("logic_cs set to `physical` but dataset not physically chunked. Using `auto` as logic_cs.")
-                logic_cs = "auto"
-        
-        return da.from_array(dataset, chunks=logic_cs)
+    if not f.keys():
+        raise ValueError('No dataset found in the input file. Aborting.')
+
+    if not to_da:
+        return f[dataset_key]
+
+    dataset = f[dataset_key]
+
+    if logic_cs == "physical":
+        if physically_chunked():  
+            logic_cs = dataset.chunks
+        else:
+            print("logic_cs set to `physical` but dataset not physically chunked. Using `auto` as logic_cs.")
+            logic_cs = "auto"
+    
+    return da.from_array(dataset, chunks=logic_cs)
 
 
 def create_random_dask_array(shape, distrib, file_path, dtype=None):
@@ -107,3 +118,7 @@ def save_to_hdf5(arr, file_path, physik_cs=None, key='/data', compression=None):
 
     da.to_hdf5(file_path, key, arr, chunks=physik_cs, compression=compression)
     print(f'Array successfully saved.\n')
+
+    # TODO: sanity check
+    # get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto")
+    # get_arr_shapes

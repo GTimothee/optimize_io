@@ -8,14 +8,11 @@ import numpy as np
 import dask
 import dask.array as da
 
-import optimize_io
-from optimize_io.main import optimize_func
-
-import tests_utils
-from tests_utils import *
+from dask_io.optimizer.main import optimize_func
 
 
-def test_sum():
+
+def sum():
     """ Test if the sum of two blocks yields the good
     result usign our optimization function.
     """
@@ -152,9 +149,9 @@ def store_test(optimized):
                 store_correct(split_filepath, arr_list, chunks_shape)
 
 
-def test_store_optimized():
+"""def test_store_optimized():
     store_test(True)
 
 
 def test_store_non_optimized():
-    store_test(False)    
+    store_test(False)   """ 

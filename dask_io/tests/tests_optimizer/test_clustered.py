@@ -1,29 +1,33 @@
 import os 
-
-from optimize_io.clustered import *
-from optimize_io.modifiers import get_used_proxies
-
-from tests_utils import *
-
 import sys
+
+from dask_io.cases.case_config import CaseConfig
+from dask_io.utils.array_utils import get_arr_shapes
+from dask_io.utils.get_arrays import get_dask_array_from_hdf5
+
+from dask_io.optimizer.clustered import *
+from dask_io.optimizer.modifiers import get_used_proxies
 
 
 # TODO: make tests with different chunk shapes
+data_dirpath = 'data'
+array_filepath = os.path.join(data_dirpath, 'sample_array_nochunk.hdf5')
+log_dir = "dask_io/logs"
+
 
 def get_case_1():
-    # case 1 : continous blocks
-    data = os.path.join(os.getenv('DATA_PATH'), 'sample_array_nochunk.hdf5')
-    config = CaseConfig(data, (770, 605, 700))
-    arr = get_test_arr(config)
-    cs = get_dask_array_chunks_shape(arr)
-    dask.config.set({
+    """ case 1 : continous blocks
+    """
+    arr = get_dask_array_from_hdf5(array_filepath, '/data')
+    cs = (220, 240, 200)
+    """dask.config.set({
         'io-optimizer': {
             'chunk_shape': (220, 240, 200),
             'memory_available': 4 * ONE_GIG
         }
-    })
+    })"""
 
-    # attention à l'énoncé ci-dessous # TODO: replace by sum_case
+    # attention à l'énoncé ci-dessous 
     shape, chunks, blocks_dims = get_arr_shapes(arr)
     _3d_pos = numeric_to_3d_pos(5, blocks_dims, 'C')
     dims = [(_3d_pos[0]+1) * chunks[0],
@@ -31,8 +35,7 @@ def get_case_1():
             (_3d_pos[2]+1) * chunks[2]]
     arr = arr[0:dims[0], 0:dims[1], 0:dims[2]]
     arr = arr + 1
-    
-    return arr, config
+    return arr, cs
 
 
 def test_get_covered_blocks():
@@ -52,7 +55,7 @@ def test_get_covered_blocks():
 
 def test_get_blocks_used():
     # case 1 : continous blocks
-    arr, config = get_case_1()
+    arr, cs = get_case_1()
 
     # routine to get the needed data
     # we assume those functions have been tested before get_blocks_used
@@ -62,10 +65,10 @@ def test_get_blocks_used():
     arr_obj = dicts['origarr_to_obj'][origarr_name]
     strategy, max_blocks_per_load = get_load_strategy(4 * ONE_GIG, 
                                                       (770, 605, 700), 
-                                                      config.chunks_shape) 
+                                                      cs) 
 
     # actual test of the function
-    blocks_used, block_to_proxies = get_blocks_used(dicts, origarr_name, arr_obj, config.chunks_shape)
+    blocks_used, block_to_proxies = get_blocks_used(dicts, origarr_name, arr_obj, cs)
     expected = [0,1,4,5]
     assert blocks_used == expected
 
@@ -84,11 +87,11 @@ def test_create_buffers():
     """
 
     # case 1 : continous blocks
-    arr, config = get_case_1()
+    arr, cs = get_case_1()
 
     _, dicts = get_used_proxies(arr.dask.dicts)
     origarr_name = list(dicts['origarr_to_obj'].keys())[0]
-    buffers = create_buffers(origarr_name, dicts, config.chunks_shape)
+    buffers = create_buffers(origarr_name, dicts, cs)
     
     expected = [[0,1], [4,5]]
     
@@ -99,16 +102,16 @@ def test_create_buffers():
 
 def test_create_buffer_node():
     # preparation
-    arr, config = get_case_1()
+    arr, cs = get_case_1()
     graph = arr.dask.dicts
     _, dicts = get_used_proxies(graph)
     origarr_name = list(dicts['origarr_to_obj'].keys())[0]
-    buffers = create_buffers(origarr_name, dicts, config.chunks_shape)
+    buffers = create_buffers(origarr_name, dicts, cs)
         
     # apply function
     keys = list()
     for buffer in buffers:            
-        key = create_buffer_node(graph, origarr_name, dicts, buffer, config.chunks_shape)    
+        key = create_buffer_node(graph, origarr_name, dicts, buffer, cs)    
         keys.append(key)
 
     # test output
@@ -237,6 +240,3 @@ def test_buffering():
     exp = [[0,1,2,3], [6,7], [8, 9, 10, 11], [12]]
     out = buffering(blocks, strategy, blocks_shape, max_nb_blocks_per_buffer, row_concat=row_concat, slices_concat=slices_concat)
     assert out == exp
-
-if __name__ == "__main__":
-    test_create_buffers()
