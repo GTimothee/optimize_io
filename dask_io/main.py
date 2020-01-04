@@ -6,8 +6,8 @@ def enable_clustering(buffer_size, mem_limit=True):
 
     Arguments:
     ----------
-    buffer_size: size of buffer for clustered reads/writes.
-    sched_opti: enable memory constraint on scheduler.
+        buffer_size: size of buffer for clustered reads/writes.
+        sched_opti: enable memory constraint on scheduler.
     """
     if not mem_limit: 
         print("Warning: using clustered strategy without memory constraint on scheduler can lead to buffer overflows.")
@@ -34,7 +34,7 @@ def configure_dask(config):
 
     Arguments:
     ---------
-    config: A CaseConfig object.
+        config: A CaseConfig object.
     """
     if not config:
         raise ValueError("Empty configuration object.")

@@ -1,10 +1,8 @@
 import os
 
-import tests_utils
-from tests_utils import *
-
-import optimize_io
-from optimize_io.modifiers import *
+from dask_io.cases.case_config import CaseConfig
+from dask_io.optimizer import modifiers 
+from modifiers import *
 
 # TODO: make tests with different chunk shapes
 
@@ -21,27 +19,22 @@ def test_add_to_dict_of_lists():
 def test_get_array_block_dims():
     shape = (500, 1200, 300)
     chunks = (100, 300, 20)
-    """dask.config.set({
-        'io-optimizer': {
-            'chunk_shape': chunks
-        }
-    })"""
     block_dims = get_array_block_dims(shape, chunks)
     expected = (5, 4, 15)
     assert block_dims == expected
 
 
-def test_decompose_iterable():
+def test_flatten_iterable():
     l = [0, [1, 2, 3], 4, [5], [[6, 7]]]
     assert flatten_iterable(l, list()) == list(range(8))
 
 
 def test_get_graph_from_dask():
     # create config for the test
-    array_filepath = os.path.join(os.getenv('DATA_PATH'), 'sample_array_nochunk.hdf5')
+    array_filepath = os.path.join('data', 'sample_array_nochunk.hdf5')
     config = CaseConfig(array_filepath, None)
     config.sum_case(nb_chunks=2)
-    dask_array = get_test_arr(config)
+    dask_array = config.get()
 
     # test function
     dask_graph = dask_array.dask.dicts 
@@ -55,9 +48,6 @@ def test_get_graph_from_dask():
     for k, v in graph.items():
         print("\nkey", k)
         print("value", v)
-
-
-
 
 
 def test_get_used_proxies():

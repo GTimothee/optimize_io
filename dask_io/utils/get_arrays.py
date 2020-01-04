@@ -66,9 +66,9 @@ def create_random_dask_array(shape, distrib, file_path, dtype=None):
 
     Arguments:
     ----------
-    shape: array shape
-    distrib: distribution from which to draw values. Supported: "normal" and "uniform".
-    dtype: type of values
+        shape: array shape
+        distrib: distribution from which to draw values. Supported: "normal" and "uniform".
+        dtype: type of values
     """
     if distrib not in ["normal", "uniform"]:
         raise ValueError(f"The following distribution is not supported: {distrib}")
@@ -93,11 +93,11 @@ def save_to_hdf5(arr, file_path, physik_cs=None, key='/data', compression=None):
 
     Arguments: 
     ----------
-    arr: dask array
-    file_path
-    physik_cs
-    key
-    compression: compression algorithm. If None then compression unabled.
+        arr: dask array
+        file_path
+        physik_cs
+        key
+        compression: compression algorithm. If None then compression unabled.
     """
 
     print(f'Saving a dask array at {file_path}:')
