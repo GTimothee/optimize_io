@@ -10,7 +10,7 @@ from operator import getitem
 
 from dask_io.utils.array_utils import get_arr_shapes
 from dask_io.utils.utils import neat_print_graph, ONE_GIG
-from dask_io.optimizer.modifiers import add_to_dict_of_lists, get_config_chunk_shape
+from dask_io.optimizer.modifiers import add_to_dict_of_lists
 
 
 def apply_clustered_strategy(graph, dicts, chunk_shape):
@@ -218,7 +218,7 @@ def create_buffers(origarr_name, dicts, chunk_shape):
     # get strategy to apply
     blocks_shape = dicts['origarr_to_blocks_shape'][origarr_name] # WARNING: TODO change var name -> blocks_shape is origarr_to_blocks_shape
     strategy, max_nb_blocks_per_buffer = get_load_strategy(get_buffer_size(), 
-                                                      chunk_shape, # get_config_chunk_shape(), 
+                                                      chunk_shape, 
                                                       blocks_shape)
                                                       
     # get the blocks used list to be bufferized
@@ -276,7 +276,7 @@ def get_blocks_used(dicts, origarr_name, arr_obj, chunk_shape):
     for proxy_key in used_proxies:
         slice_tuple = dicts['proxy_to_slices'][proxy_key]
         logging.debug(f'slice_tuple found {slice_tuple}')        
-        x_range, y_range, z_range = get_covered_blocks(slice_tuple, chunk_shape) # get_config_chunk_shape())
+        x_range, y_range, z_range = get_covered_blocks(slice_tuple, chunk_shape) 
         for x in x_range:
             for y in y_range:
                 for z in z_range:
@@ -318,7 +318,7 @@ def create_buffer_node(
     # get new value
     arr_obj = dicts['origarr_to_obj'][origarr_name]
     blocks_shape = dicts['origarr_to_blocks_shape'][origarr_name]
-    buffer_slices = get_buffer_slices_from_original_array(buffer, blocks_shape, chunk_shape) # get_config_chunk_shape())
+    buffer_slices = get_buffer_slices_from_original_array(buffer, blocks_shape, chunk_shape) 
     value = (getitem, origarr_name, buffer_slices)
     logging.debug(f'Buffer_slices found: {buffer_slices}')
 
@@ -388,7 +388,7 @@ def origarr_to_buffer_slices(dicts, proxy, buffer_key, slices, chunk_shape):
 
     block_id, start_block, end_block = buffer_key
     start_pos = numeric_to_3d_pos(start_block, img_nb_blocks_per_dim, 'C')
-    offset = [x * i for x, i in zip(start_pos, chunk_shape)]# get_config_chunk_shape())]
+    offset = [x * i for x, i in zip(start_pos, chunk_shape)]
 
     new_slices = list()
     for i, s in enumerate(slices):

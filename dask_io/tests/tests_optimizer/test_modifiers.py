@@ -53,20 +53,14 @@ def test_get_graph_from_dask():
 
 
 def test_get_used_proxies():
-    for chunk_shape_key in list(CHUNK_SHAPES_EXP1.keys()):
+    for chunk_shape_key in ['blocks_previous_exp', 'blocks_dask_interpol']:
         cs = CHUNK_SHAPES_EXP1[chunk_shape_key]
 
         case = CaseConfig(array_filepath, cs)
         case.sum(nb_chunks=2)
         
         for use_BFS in [True]: #, False]:
-            dask_array = get_dask_array_from_hdf5(case.array_filepath, '/data', to_da=True, logic_cs=cs)
-            
-            """dask.config.set({
-                'io-optimizer': {
-                    'chunk_shape': cs
-                }
-            })"""
+            dask_array = case.get()
 
             # test function
             dask_graph = dask_array.dask.dicts 
@@ -74,6 +68,7 @@ def test_get_used_proxies():
             
             # test slices values
             slices = list(dicts['proxy_to_slices'].values())
+
             if "blocks" in chunk_shape_key:
                 s1 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
                 s2 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(cs[2], 2 * cs[2], None))

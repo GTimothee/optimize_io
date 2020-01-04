@@ -19,7 +19,7 @@ class CaseConfig():
             raise ValueError(f'chunks_shape cannot be None.')
 
         self.array_filepath = array_filepath
-        self.chunks_shape = "auto"
+        self.chunks_shape = chunks_shape
         self.case = None
 
 
