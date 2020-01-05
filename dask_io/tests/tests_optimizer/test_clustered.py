@@ -10,9 +10,7 @@ from dask_io.optimizer.modifiers import get_used_proxies
 
 
 # TODO: make tests with different chunk shapes
-data_dirpath = 'data'
-array_filepath = os.path.join(data_dirpath, 'sample_array_nochunk.hdf5')  # shape is (1540, 1210, 1400) 
-log_dir = "dask_io/logs"
+from .utils import ARRAY_FILEPATH
 
 
 def get_case_1():
@@ -20,7 +18,7 @@ def get_case_1():
     case 1 : continous blocks
     """
     cs = (770, 605, 700)  # 8 Chunks
-    arr = get_dask_array_from_hdf5(array_filepath, '/data', logic_cs=cs)
+    arr = get_dask_array_from_hdf5(ARRAY_FILEPATH, '/data', logic_cs=cs)
     
     dask.config.set({
         'io-optimizer': {

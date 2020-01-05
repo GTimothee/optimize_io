@@ -10,9 +10,7 @@ from dask_io.optimizer.modifiers import *
 
 
 # TODO: make tests with different chunk shapes
-data_dirpath = 'data'
-array_filepath = os.path.join(data_dirpath, 'sample_array_nochunk.hdf5')
-log_dir = "dask_io/logs"
+from .utils import ARRAY_FILEPATH, LOG_DIR
 
 
 def test_add_to_dict_of_lists():
@@ -39,14 +37,14 @@ def test_flatten_iterable():
 
 def test_get_graph_from_dask():
     # create config for the test
-    case = CaseConfig(array_filepath, "auto")
+    case = CaseConfig(ARRAY_FILEPATH, "auto")
     case.sum(nb_chunks=2)
     dask_array = case.get()
 
     # test function
     dask_graph = dask_array.dask.dicts 
     graph = get_graph_from_dask(dask_graph, undirected=False)
-    with open(os.path.join(log_dir, 'get_graph_from_dask.txt'), "w+") as f:
+    with open(os.path.join(LOG_DIR, 'get_graph_from_dask.txt'), "w+") as f:
         for k, v in graph.items():
             f.write("\n\n" + str(k))
             f.write("\n" + str(v))
@@ -56,7 +54,7 @@ def test_get_used_proxies():
     for chunk_shape_key in ['blocks_previous_exp', 'blocks_dask_interpol']:
         cs = CHUNK_SHAPES_EXP1[chunk_shape_key]
 
-        case = CaseConfig(array_filepath, cs)
+        case = CaseConfig(ARRAY_FILEPATH, cs)
         case.sum(nb_chunks=2)
         
         for use_BFS in [True]: #, False]:
@@ -153,7 +151,7 @@ def test_BFS_3():
     # get test array with logical rechunking
     chunks_shape = (770, 605, 700)
 
-    case = CaseConfig(array_filepath, chunks_shape)
+    case = CaseConfig(ARRAY_FILEPATH, chunks_shape)
     case.sum(nb_chunks=2)
     dask_array = case.get()
     # dask_array.visualize(filename='tests/outputs/img.png', optimize_graph=False)
@@ -161,7 +159,7 @@ def test_BFS_3():
     # get formatted graph for processing
     graph = get_graph_from_dask(dask_array.dask.dicts, undirected=False)  # we want a directed graph
 
-    with open(os.path.join(log_dir, 'test_BFS_3.txt'), "w+") as f:
+    with open(os.path.join(LOG_DIR, 'test_BFS_3.txt'), "w+") as f:
         for k, v in graph.items():
             f.write("\n\n" + str(k))
             f.write("\n" + str(v))

@@ -9,52 +9,32 @@ import dask
 import dask.array as da
 
 from dask_io.optimizer.main import optimize_func
+from dask_io.main import enable_clustering, disable_clustering
+from dask_io.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
+
+from .utils import ARRAY_FILEPATH
 
 
-
-def sum():
-    """ Test if the sum of two blocks yields the good
-    result usign our optimization function.
+def test_sum():
+    """ Test if the sum of two blocks yields the good result using our optimization function.
     """
-    data = os.path.join(os.getenv('DATA_PATH'), 'sample_array_nochunk.hdf5')
-    output_dir = os.environ.get('OUTPUT_DIR')
-    key = 'data'
-    for nb_arr_to_sum in [2]:
-        for chunk_shape in list(CHUNK_SHAPES_EXP1.keys()): 
-            print("chunk shape", chunk_shape)
-            # prepare test case
-            new_config = CaseConfig(array_filepath=data, chunks_shape=CHUNK_SHAPES_EXP1[chunk_shape])
-            new_config.sum_case(nb_chunks=nb_arr_to_sum)
 
-            # run in opti and non opti modes
-            dask.config.set({'optimizations': []})
-            arr = get_test_arr(new_config)
-            dask.config.set({
-                'io-optimizer': {
-                    'chunk_shape': get_dask_array_chunks_shape(arr),
-                    'memory_available': 4 * ONE_GIG
-                }
-            })
-            result_non_opti = arr.compute()
+    for chunk_shape in list(CHUNK_SHAPES_EXP1.keys()): 
+        # prepare test case
+        cs = CHUNK_SHAPES_EXP1[chunk_shape]
+        case = CaseConfig(array_filepath, cs)
+        case.sum(nb_chunks)
 
-            dask.config.set({'optimizations': [optimize_func]})
-            result_opti = get_test_arr(new_config).compute()
-            assert np.array_equal(result_non_opti, result_opti)
-            print("passed.")
+        # non optimized run
+        disable_clustering()
+        result_non_opti = case.get().compute()
 
-            # viz
-            """file_name = chunk_shape + '_' + str(nb_arr_to_sum)"""
+        # optimized run
+        buffer_size = 4 * ONE_GIG
+        enable_clustering(buffer_size)
+        result_opti = case.get().compute()
 
-            """
-            dask.config.set({'optimizations': []})
-            arr = get_test_arr(new_config)
-            output_path = os.path.join(output_dir, file_name + '_non_opti.png')
-            arr.visualize(filename=output_path, optimize_graph=True)"""
-
-            """dask.config.set({'optimizations': [optimize_func]})
-            opti_arr = get_test_arr(new_config)
-            output_path = os.path.join(output_dir, file_name + '_opti.png')
-            opti_arr.visualize(filename=output_path, optimize_graph=True)"""
+        assert np.array_equal(result_non_opti, result_opti)
 
 
 #----------------------------------------------------------- SPLIT TESTING 
