@@ -40,39 +40,13 @@ def sum_tester(shapes_to_test):
         assert np.array_equal(result_non_opti, result_opti)
 
 
-"""def test_sum_blocks():
+def test_sum_blocks():
     sum_tester(['blocks_previous_exp', 'blocks_dask_interpol'])
 
 
 def test_sum_slabs():
-    sum_tester(['slabs_previous_exp', 'slabs_dask_interpol'])"""
+    sum_tester(['slabs_previous_exp', 'slabs_dask_interpol'])
 
-
-#----------------------------------------------------------- SPLIT TESTING 
-
-def split2(split_filepath, case, nb_blocks, cs):
-    # overwrite if split file already exists
-    if os.path.isfile(split_filepath):
-        os.remove(split_filepath)
-
-    # compute the split
-    with h5py.File(split_filepath, 'w') as f:
-        # get array parts to be saved in different places
-        arr = get_or_create_array(config)
-        arr_list = get_arr_list(arr, nb_blocks)  # arr_list == splits to be saved
-
-        datasets = list()
-        for i, a in enumerate(arr_list):
-            print("creating dataset in split file -> dataset path: ", '/data' + str(i))
-            print("storing data of shape", a.shape)
-            datasets.append(f.create_dataset('/data' + str(i), shape=a.shape))
-
-        print("storing...")    
-        da.store(arr_list, datasets, compute=True)
-        print("stored with success.")
-
-    return 
-    
 
 def split_test(optimized):
     def create_arrays_for_comparison():
