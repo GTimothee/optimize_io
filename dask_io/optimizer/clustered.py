@@ -109,23 +109,30 @@ def overlap_slice(curr_buff, buff, blocks_shape):
 
 
 def merge_rows(buffers, blocks_shape, nb_blocks_per_row, max_blocks_per_load):
-    """ Utility function for buffering """
+    """ Utility function for buffering: pack contiguous rows in a same buffer.
+    
+    """
+    def is_complete_row(buff, nb_blocks_per_row):
+        """ Verify if buffer contains a complete row of blocks (=chunks).
+        We made sure that initial buffers contain only blocks from the same row
+        therefore we can just see if number of blocks in buffer == nb blocks in a row
+        """
+        return (len(buff) == nb_blocks_per_row)	
+
     merged_buffers = list()
     curr_buff = list()
 
-    def is_complete_row(buff, nb_blocks_per_row):
-        """we made sure that initial buffers contain only blocks from the same row
-        therefore we can just see if number of blocks in buffer == nb blocks in a row"""
-        return (len(buff) == nb_blocks_per_row)	
-
     logging.debug(f'\nBefore first concat: {buffers}')
     logging.debug(f'Max_blocks_per_load: {max_blocks_per_load}')
+
     for buff in buffers:
         logging.debug(f'Treating buff {buff}')
+
         if not is_complete_row(buff, nb_blocks_per_row):
-            merged_buffers.append(curr_buff) # just modified
-            curr_buff = list()
-            merged_buffers.append(buff) # dont process
+            if len(curr_buff) != 0:  # if a pack of 1+ rows was being filled, save it and start a new one
+                merged_buffers.append(curr_buff) 
+                curr_buff = list()
+            merged_buffers.append(buff)  # dont process current buffer as it is not a complete row
         else:
             start_new_buffer = False 
             
@@ -139,7 +146,8 @@ def merge_rows(buffers, blocks_shape, nb_blocks_per_row, max_blocks_per_load):
             
             if start_new_buffer:
                 logging.debug("Starting new buffer")
-                merged_buffers.append(curr_buff)
+                if len(curr_buff) != 0: 
+                    merged_buffers.append(curr_buff)
                 curr_buff = buff
             else:
                 curr_buff = curr_buff + buff
@@ -216,7 +224,7 @@ def create_buffers(origarr_name, dicts, chunk_shape):
         return list_of_lists, None
 
     # get strategy to apply
-    blocks_shape = dicts['origarr_to_blocks_shape'][origarr_name] # WARNING: TODO change var name -> blocks_shape is origarr_to_blocks_shape
+    blocks_shape = dicts['origarr_to_blocks_shape'][origarr_name] # WARNING: TODO change var name -> blocks_shape is origarr_blocks_shape
     strategy, max_nb_blocks_per_buffer = get_load_strategy(get_buffer_size(), 
                                                       chunk_shape, 
                                                       blocks_shape)

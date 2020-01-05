@@ -6,7 +6,7 @@ from dask_io.utils.get_arrays import get_dask_array_from_hdf5
 
 from dask_io.cases.case_config import CaseConfig
 
-from dask_io.optimizer.modifiers import *
+from dask_io.optimizer.modifiers import *  # package to be tested
 
 
 # TODO: make tests with different chunk shapes
@@ -50,8 +50,8 @@ def test_get_graph_from_dask():
             f.write("\n" + str(v))
 
 
-def test_get_used_proxies():
-    for chunk_shape_key in ['blocks_previous_exp', 'blocks_dask_interpol']:
+def used_proxies_tester(shapes_to_test):
+    for chunk_shape_key in shapes_to_test:
         cs = CHUNK_SHAPES_EXP1[chunk_shape_key]
 
         case = CaseConfig(ARRAY_FILEPATH, cs)
@@ -83,6 +83,14 @@ def test_get_used_proxies():
             print(slices[1])
 
             assert slices == [s1, s2]
+
+
+def test_get_used_proxies_blocks():
+    used_proxies_tester(['blocks_previous_exp', 'blocks_dask_interpol'])
+
+
+def test_get_used_proxies_slabs():
+    used_proxies_tester(['slabs_previous_exp'])
 
 
 def test_BFS():

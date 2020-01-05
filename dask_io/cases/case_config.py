@@ -1,4 +1,4 @@
-import os
+import os, h5py 
 import dask.array as da
 from dask_io.utils.get_arrays import get_dask_array_from_hdf5
 from dask_io.cases.case_creation import sum_chunks_case, split_to_hdf5

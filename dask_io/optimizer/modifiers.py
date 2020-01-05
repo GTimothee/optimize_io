@@ -5,6 +5,7 @@ import numpy as np
 import datetime
 import logging
 from dask_io.utils.utils import LOG_TIME
+from collections import Hashable
 
 
 def add_to_dict_of_lists(d, k, v, unique=False):
@@ -131,8 +132,8 @@ def get_graph_from_dask(graph, undirected=False):
                     add_to_remade_graph(remade_graph, key, arg, undirected)
 
         # if it is an argument, add it
-        elif isinstance(key, collections.Hashable):
-            if isinstance(v, collections.Hashable):  
+        elif isinstance(key, Hashable):
+            if isinstance(v, Hashable):  
                 if isinstance(v, tuple):
                     pass
                 add_to_remade_graph(remade_graph, key, v, undirected)

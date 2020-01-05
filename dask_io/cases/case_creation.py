@@ -1,3 +1,4 @@
+import dask.array as da
 from dask_io.utils.array_utils import get_arr_shapes
 
 
@@ -62,13 +63,13 @@ def split_to_hdf5(arr, f, nb_blocks=None):
         f: an open hdf5 file to store data in it.
         nb_blocks: nb blocks we want to extract
     """
-    arr_list = get_arr_list(arr, nb_blocks)
+    arr_list = get_arr_chunks(arr, nb_blocks)
     datasets = list()
 
     for i, a in enumerate(arr_list):
         key = '/data' + str(i)
         print("creating chunk in hdf5 dataset -> dataset path: ", key)
         print("storing chunk of shape", a.shape)
-        datasets.append(f.create_dataset(key + str(i), shape=a.shape))
+        datasets.append(f.create_dataset(key, shape=a.shape))
 
     return da.store(arr_list, datasets, compute=False)

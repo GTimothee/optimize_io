@@ -1,28 +1,31 @@
-import sys
 import os
-import copy
-import time
 import h5py
 import numpy as np
+
+from dask_io.tests.custom_setup import setup_custom_dask
+setup_custom_dask()
 
 import dask
 import dask.array as da
 
-from dask_io.optimizer.main import optimize_func
+from dask_io.cases.case_config import CaseConfig
+from dask_io.cases.case_creation import get_arr_chunks
 from dask_io.main import enable_clustering, disable_clustering
 from dask_io.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
+from dask_io.utils.get_arrays import get_dask_array_from_hdf5
 
-from ..utils import ARRAY_FILEPATH
+from ..utils import ARRAY_FILEPATH, DATA_DIRPATH
 
 
-def test_sum():
+def sum_tester(shapes_to_test):
     """ Test if the sum of two blocks yields the good result using our optimization function.
     """
+    nb_chunks = 2
 
-    for chunk_shape in list(CHUNK_SHAPES_EXP1.keys()): 
+    for chunk_shape in shapes_to_test: 
         # prepare test case
         cs = CHUNK_SHAPES_EXP1[chunk_shape]
-        case = CaseConfig(array_filepath, cs)
+        case = CaseConfig(ARRAY_FILEPATH, cs)
         case.sum(nb_chunks)
 
         # non optimized run
@@ -37,9 +40,17 @@ def test_sum():
         assert np.array_equal(result_non_opti, result_opti)
 
 
+"""def test_sum_blocks():
+    sum_tester(['blocks_previous_exp', 'blocks_dask_interpol'])
+
+
+def test_sum_slabs():
+    sum_tester(['slabs_previous_exp', 'slabs_dask_interpol'])"""
+
+
 #----------------------------------------------------------- SPLIT TESTING 
 
-def split(split_filepath, config, nb_blocks):
+def split2(split_filepath, case, nb_blocks, cs):
     # overwrite if split file already exists
     if os.path.isfile(split_filepath):
         os.remove(split_filepath)
@@ -61,77 +72,84 @@ def split(split_filepath, config, nb_blocks):
         print("stored with success.")
 
     return 
-
-
-def stored_file(split_filepath):
-    print("Checking split file integrity...")
-    with h5py.File(split_filepath, 'r') as f:
-        print("file", f)
-        print("keys", list(f.keys()))
-        assert len(list(f.keys())) != 0
-    print("Integrity check passed.")
-
-
-def store_correct(split_filepath, arr_list, logical_chunks_shape):
-    print("Testing", len(arr_list), "matches...")
-    with h5py.File(split_filepath, 'r') as f:
-        for i, a in enumerate(arr_list):
-            stored_a = da.from_array(f['/data' + str(i)])
-            print("split shape:", stored_a.shape)
-            
-            stored_a.rechunk(chunks=logical_chunks_shape)
-            print("split rechunked to:", stored_a.shape)
-            print("will be compared to : ", a.shape)
-
-            print("Testing all close...")
-            test = da.allclose(stored_a, a)
-            assert test.compute()
-            print("Passed.")
-
-
-def create_arrays_for_comparison(config, nb_blocks):
-    arr = get_or_create_array(config)
-    arr_list = get_arr_list(arr, nb_blocks) 
-    return arr_list
     
 
-def store_test(optimized):
+def split_test(optimized):
+    def create_arrays_for_comparison():
+        """ Get chunks as dask arrays to compare the chunks to the splitted files.
+        """
+        arr = get_dask_array_from_hdf5(ARRAY_FILEPATH, '/data', to_da=True, logic_cs=cs)
+        arr_list = get_arr_chunks(arr, nb_chunks=nb_blocks)
+        return arr_list
+
+
+    def apply_sanity_check(split_filepath):
+        """ Check if splitted file not empty.
+        """
+        print("Checking split file integrity...")
+        with h5py.File(split_filepath, 'r') as f:
+            print("file", f)
+            print("keys", list(f.keys()))
+            assert len(list(f.keys())) != 0
+        print("Integrity check passed.")
+
+
+    def store_correct():
+        """ Compare the real chunks to the splits to see if correctly splitted. 
+        """
+        print("Testing", len(arr_list), "matches...")
+        with h5py.File(split_filepath, 'r') as f:
+            for i, a in enumerate(arr_list):
+                stored_a = da.from_array(f['/data' + str(i)])
+                print("split shape:", stored_a.shape)
+                
+                stored_a.rechunk(chunks=cs)
+                print("split rechunked to:", stored_a.shape)
+                print("will be compared to : ", a.shape)
+
+                print("Testing all close...")
+                test = da.allclose(stored_a, a)
+                assert test.compute()
+                print("Passed.")
+        
+
+    def split():
+        # overwrite if split file already exists
+        if os.path.isfile(split_filepath):
+            os.remove(split_filepath)
+
+        case = CaseConfig(ARRAY_FILEPATH, cs)
+        case.split_hdf5(split_filepath, nb_blocks=nb_blocks)
+        case.get().compute()
+        return 
+
+
     # setup config
-    orig_arr_filepath = os.path.join(os.getenv('DATA_PATH'), 'sample_array_nochunk.hdf5')
-    split_filepath = os.path.join(os.getenv('DATA_PATH'), "split_file.hdf5")
+    split_filepath = os.path.join(DATA_DIRPATH, "split_file.hdf5")
     nb_blocks = 2
 
-    for chunks_shape_name in list(CHUNK_SHAPES_EXP1.keys()): # ['slabs_dask_interpol']:
-        for scheduler_optimimzed in [True, False]:
-            # select chunk shape to use for the split (=split shape)
-            chunks_shape = CHUNK_SHAPES_EXP1[chunks_shape_name]
+    if optimized:
+        buffer_size = 4 * ONE_GIG
+        enable_clustering(buffer_size)
+    else:
+        disable_clustering()
 
-            # configuration -> setup 
-            config = CaseConfig(array_filepath=orig_arr_filepath,
-                                chunks_shape=chunks_shape)
-            config.optimization(opti=optimized, 
-                                scheduler_opti=scheduler_optimimzed, 
-                                buffer_size=4 * ONE_GIG)
-            configure_dask(config, optimize_func)
+    for chunks_shape_name in CHUNK_SHAPES_EXP1.keys(): 
+        # select chunk shape to use for the split (=split shape)
+        cs = CHUNK_SHAPES_EXP1[chunks_shape_name]
 
-            # select what you want to do 
-            do_store, do_check = (True, True)
+        # do the test
+        split()
+        apply_sanity_check(split_filepath)
 
-            if do_store:
-                # split
-                split(split_filepath, config, nb_blocks)
-                # checker
-                stored_file(split_filepath)
-
-            if do_check:
-                # test output of split
-                arr_list = create_arrays_for_comparison(config, nb_blocks)
-                store_correct(split_filepath, arr_list, chunks_shape)
+        # assert
+        arr_list = create_arrays_for_comparison()
+        store_correct()
 
 
-"""def test_store_optimized():
-    store_test(True)
+def test_split_optimized():
+    split_test(True)
 
 
-def test_store_non_optimized():
-    store_test(False)   """ 
+def test_split_non_optimized():
+    split_test(False)   
