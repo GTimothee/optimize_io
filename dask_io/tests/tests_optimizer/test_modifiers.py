@@ -10,7 +10,7 @@ from dask_io.optimizer.modifiers import *
 
 
 # TODO: make tests with different chunk shapes
-from .utils import ARRAY_FILEPATH, LOG_DIR
+from ..utils import ARRAY_FILEPATH, LOG_DIR
 
 
 def test_add_to_dict_of_lists():

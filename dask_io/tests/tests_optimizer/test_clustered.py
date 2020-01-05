@@ -10,7 +10,7 @@ from dask_io.optimizer.modifiers import get_used_proxies
 
 
 # TODO: make tests with different chunk shapes
-from .utils import ARRAY_FILEPATH
+from ..utils import ARRAY_FILEPATH
 
 
 def get_case_1():

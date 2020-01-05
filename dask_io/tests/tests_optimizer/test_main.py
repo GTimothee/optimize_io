@@ -12,7 +12,7 @@ from dask_io.optimizer.main import optimize_func
 from dask_io.main import enable_clustering, disable_clustering
 from dask_io.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
 
-from .utils import ARRAY_FILEPATH
+from ..utils import ARRAY_FILEPATH
 
 
 def test_sum():
