@@ -2,6 +2,7 @@
 dask_io/logs
 data
 notebooks
+dask_io/tests/custom_setup.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
