@@ -88,3 +88,14 @@ class CaseConfig():
             return split_to_hdf5(arr, case['params']['out_file'], nb_blocks=case['params']['nb_blocks'])
         elif case['name'] == 'split_npy':
             da.to_npy_stack(case['params']['out_dirpath'], arr)
+
+    
+    def clean(self):
+        name = self.case['name']
+        if name and name != 'sum':
+            try:
+                f = self.case['params']['out_file']
+                if f:
+                    f.close()
+            except:
+                pass

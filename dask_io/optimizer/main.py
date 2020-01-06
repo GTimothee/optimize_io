@@ -7,10 +7,9 @@ import logging
 
 from dask_io.optimizer.clustered import apply_clustered_strategy
 from dask_io.optimizer.modifiers import get_used_proxies, get_array_block_dims
-from dask_io.utils.utils import LOG_TIME
+from dask_io.utils.utils import LOG_TIME, LOG_DIR
 
-log_dir = 'dask_io/logs'
-logging.basicConfig(filename=os.path.join(log_dir, LOG_TIME + '.log'), level=logging.DEBUG) # to be set to WARNING
+logging.basicConfig(filename=os.path.join(LOG_DIR, LOG_TIME + '.log'), level=logging.DEBUG) # to be set to WARNING
 
 DEBUG_MODE = False
 

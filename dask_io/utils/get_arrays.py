@@ -2,6 +2,7 @@ import dask
 import dask.array as da
 import os
 import h5py
+from dask_io.utils.array_utils import inspect_h5py_file
 
 
 def get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto"):
@@ -60,6 +61,8 @@ def get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto"
     if not to_da:
         return f[dataset_key]
 
+    inspect_h5py_file(f)
+
     dataset = f[dataset_key]
 
     if logic_cs == "physical":
@@ -72,7 +75,7 @@ def get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto"
     return da.from_array(dataset, chunks=logic_cs)
 
 
-def create_random_dask_array(shape, distrib, file_path, dtype=None):
+def create_random_dask_array(shape, distrib, dtype=None):
     """ Generate and return a random dask array.
 
     Arguments:

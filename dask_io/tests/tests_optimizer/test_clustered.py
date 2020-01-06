@@ -4,7 +4,6 @@ import sys
 from dask_io.cases.case_config import CaseConfig
 from dask_io.utils.array_utils import get_arr_shapes
 from dask_io.utils.get_arrays import get_dask_array_from_hdf5
-
 from dask_io.optimizer.modifiers import get_used_proxies
 from dask_io.optimizer.clustered import *  # package to be tested
 

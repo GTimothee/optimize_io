@@ -1,3 +1,4 @@
+from dask_io.optimizer.main import optimize_func
 import dask 
 
 
@@ -12,7 +13,6 @@ def enable_clustering(buffer_size, mem_limit=True):
     if not mem_limit: 
         print("Warning: using clustered strategy without memory constraint on scheduler can lead to buffer overflows.")
 
-    from dask_io.optimizer.main import optimize_func
     dask.config.set({
         'optimizations': [optimize_func],
         'io-optimizer': {
