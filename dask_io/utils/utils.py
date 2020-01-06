@@ -1,6 +1,7 @@
 import os
 import datetime
 import csv
+import traceback
 
 
 ONE_GIG = 1000000000
@@ -43,6 +44,7 @@ def create_csv_file(filepath, columns, delimiter=',', mode='w+'):
         writer = csv.writer(csv_out, delimiter=delimiter)
         writer.writerow(columns)
         return csv_out, writer
-    except OSError:
+    except OSError as e:
+        print(traceback.format_exc())
         print("An error occured while attempting to create/write csv file.")
         exit(1)
