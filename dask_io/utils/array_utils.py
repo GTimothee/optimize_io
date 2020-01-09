@@ -1,7 +1,7 @@
 from h5py import Dataset
 
 
-def get_arr_shapes(arr):
+def get_arr_shapes(arr, dtype=False):
     """ Routine that returns shape information on from dask array.
 
     Arguments:
@@ -17,7 +17,10 @@ def get_arr_shapes(arr):
     shape = arr.shape
     chunks = tuple([c[0] for c in arr.chunks])
     chunk_dims = [len(c) for c in arr.chunks]  
-    return shape, chunks, chunk_dims
+    data = [shape, chunks, chunk_dims]
+    if dtype:
+        data.append(arr.dtype)
+    return tuple(data)
 
 
 def inspect_h5py_file(f):
