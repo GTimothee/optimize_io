@@ -43,9 +43,7 @@ class CaseConfig():
         ----------
             nb_blocks: nb_blocks to extract from the original array
         """
-
-        if os.path.isfile(out_filepath):
-            os.remove(out_filepath)
+        self.out_filepath = out_filepath
 
         self.case = {
             'name': 'split_hdf5',
@@ -84,6 +82,8 @@ class CaseConfig():
         if case['name'] == 'sum':
             return sum_chunks_case(arr, case['params']['nb_chunks'], compute=False)
         elif case['name'] == 'split_hdf5':
+            if os.path.isfile(self.out_filepath):
+                os.remove(self.out_filepath)
             case['params']['out_file'] = h5py.File(case['params']['out_filepath'], 'w')
             return split_to_hdf5(arr, case['params']['out_file'], nb_blocks=case['params']['nb_blocks'])
         elif case['name'] == 'split_npy':
