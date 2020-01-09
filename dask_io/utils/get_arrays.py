@@ -122,6 +122,6 @@ def save_to_hdf5(arr, file_path, physik_cs=None, key='/data', compression=None):
     da.to_hdf5(file_path, key, arr, chunks=physik_cs, compression=compression)
     print(f'Array successfully saved.\n')
 
-    # TODO: sanity check
-    # get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto")
-    # get_arr_shapes
+    print(f'Inspecting created file...')
+    with h5py.File(file_path, 'r') as f:
+        inspect_h5py_file(f)

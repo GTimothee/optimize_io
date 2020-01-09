@@ -14,4 +14,3 @@ def setup_custon_dask():
 ```
 
 + add a symbolic link/or direct folder called 'data' to data folder for the tests
-+ create logs folder in dask_io/dask_io

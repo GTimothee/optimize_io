@@ -1,14 +1,12 @@
 import os
-
 from dask_io.utils.utils import CHUNK_SHAPES_EXP1
 from dask_io.utils.array_utils import get_arr_shapes
-from dask_io.utils.get_arrays import get_dask_array_from_hdf5
 from dask_io.cases.case_config import CaseConfig
 from dask_io.optimizer.modifiers import *  # package to be tested
 
 
 # TODO: make tests with different chunk shapes
-from ..utils import ARRAY_FILEPATH, LOG_DIR
+from ..utils import ARRAY_FILEPATH, LOG_DIR, setup_routine
 
 
 def test_add_to_dict_of_lists():

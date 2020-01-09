@@ -8,7 +8,7 @@ from dask_io.optimizer.modifiers import get_used_proxies
 from dask_io.optimizer.clustered import *  # package to be tested
 
 # TODO: make tests with different chunk shapes
-from ..utils import ARRAY_FILEPATH
+from ..utils import ARRAY_FILEPATH, setup_routine
 
 
 def get_case_1():

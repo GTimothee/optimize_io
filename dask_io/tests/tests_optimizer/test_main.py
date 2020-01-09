@@ -14,7 +14,7 @@ from dask_io.main import enable_clustering, disable_clustering
 from dask_io.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
 from dask_io.utils.get_arrays import get_dask_array_from_hdf5
 
-from ..utils import ARRAY_FILEPATH, DATA_DIRPATH
+from ..utils import ARRAY_FILEPATH, DATA_DIRPATH, setup_routine
 
 
 def sum_tester(shapes_to_test):
