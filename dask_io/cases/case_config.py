@@ -71,12 +71,11 @@ class CaseConfig():
     def get(self):
         """ Get the case to compute from the configuration.
         """
-
-        if not self.case:
-            print('No case defined, nothing to do.')
-            return 
-        
         arr = get_dask_array_from_hdf5(self.array_filepath, '/data', to_da=True, logic_cs=self.chunks_shape)
+
+        if self.case == None:
+            print('No case defined, nothing to do.')
+            return arr
 
         case = self.case 
         if case['name'] == 'sum':
