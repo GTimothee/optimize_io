@@ -1,4 +1,5 @@
 from h5py import Dataset
+import dask
 
 
 def get_arr_shapes(arr, dtype=False):
@@ -14,6 +15,9 @@ def get_arr_shapes(arr, dtype=False):
         chunks: shape of one chunk
         chunk_dims: number of chunks in each dimension
     """
+    if not isinstance(arr, dask.array.Array):
+        raise TypeError('Not a dask array')
+
     shape = arr.shape
     chunks = tuple([c[0] for c in arr.chunks])
     chunk_dims = [len(c) for c in arr.chunks]  
