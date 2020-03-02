@@ -1,7 +1,6 @@
 import pytest
 import os
 import tempfile
-import shutil
 
 @pytest.fixture(scope="session", autouse=True)
 def temporary_directory(): 
