@@ -8,8 +8,7 @@ def temporary_directory():
     """ Create a temporary directory to run all the tests into.
     """
     old_cwd = os.getcwd()
-    newpath = tempfile.mkdtemp()
-    os.chdir(newpath)
-    yield
-    os.chdir(old_cwd)
-    shutil.rmtree(newpath)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        os.chdir(tmpdirname)
+        yield
+        os.chdir(old_cwd)
