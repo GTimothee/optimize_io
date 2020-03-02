@@ -1,15 +1,22 @@
 import os 
 import pytest
-import h5py 
-import dask
 
 from dask_io.utils.get_arrays import get_dask_array_from_hdf5, get_dataset
 
-from ..utils import test_array_path
+from ..utils import create_test_array_nochunk
+
+
+@pytest.fixture
+def test_array_path():
+    array_filepath = './small_array_nochunk.hdf5'
+    if not os.path.isfile(array_filepath):
+        create_test_array_nochunk(array_filepath, (100, 100, 100))
+    return array_filepath 
 
 
 def test_get_dask_array_from_hdf5(test_array_path):    
-    
+    import dask
+
     dask_arr = get_dask_array_from_hdf5(test_array_path, '/data', logic_cs="auto")
     assert isinstance(dask_arr, dask.array.Array)
 
@@ -37,6 +44,8 @@ def test_get_dask_array_from_hdf5(test_array_path):
 
 
 def test_get_dataset(test_array_path):
+    import h5py 
+
     dataset = get_dataset(test_array_path, '/data')
     assert isinstance(dataset, h5py.Dataset)
 
