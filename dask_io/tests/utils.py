@@ -2,14 +2,13 @@ import os, pytest
 import numpy as np
 from dask_io.utils.get_arrays import get_dask_array_from_hdf5, create_random_dask_array, save_to_hdf5
 
-DATA_DIRPATH = 'data'
-ARRAY_FILEPATH = os.path.join(DATA_DIRPATH, 'sample_array_nochunk.hdf5')
-ARRAY_FILEPATH_SMALL = os.path.join(DATA_DIRPATH, 'small_array_nochunk.hdf5')
+ARRAY_FILEPATH = './data/sample_array_nochunk.hdf5'
+ARRAY_FILEPATH_SMALL = os.path.join('./data/small_array_nochunk.hdf5')
 LOG_DIR = "dask_io/logs"
 
 ARRAY_SHAPES = {
-        ARRAY_FILEPATH: (500, 500, 500),
-        ARRAY_FILEPATH_SMALL: (1540, 1210, 1400),
+        ARRAY_FILEPATH: (1540, 1210, 1400),
+        ARRAY_FILEPATH_SMALL: (500,500,500),
 }
 
 def create_test_array_nochunk(file_path):
@@ -21,13 +20,11 @@ def create_test_array_nochunk(file_path):
         save_to_hdf5(arr, file_path, physik_cs=None, key='/data', compression=None)
 
 
-@pytest.fixture(autouse=True)
-def setup_routine():
+@pytest.fixture() # autouse=True)
+def create_test_array(): # setup_routine():
     """ Create a file at path ARRAY_FILEPATH for the tests.
     If the array does not exist, the array is created and saved.
-    """
-    
+    """ 
     create_test_array_nochunk(ARRAY_FILEPATH_SMALL)
-
     if not os.path.isdir(LOG_DIR):
         os.mkdir(LOG_DIR)
