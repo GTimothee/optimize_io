@@ -1,38 +1,45 @@
 import os 
 import sys
+import pytest
 
+from dask_io.main import enable_clustering
 from dask_io.cases.case_config import CaseConfig
 from dask_io.utils.array_utils import get_arr_shapes
 from dask_io.utils.get_arrays import get_dask_array_from_hdf5
 from dask_io.optimizer.modifiers import get_used_proxies
-from dask_io.optimizer.clustered import *  # package to be tested
+from dask_io.optimizer.clustered import *  # package being tested
 
-# TODO: make tests with different chunk shapes
-from ..utils import ARRAY_FILEPATH, setup_routine
+from ..utils import create_test_array_nochunk
+
+pytest.test_array_path = None
 
 
-def get_case_1():
-    """ Create a test case for some test functions.
-    case 1 : continous blocks
-    """
-    cs = (770, 605, 700)  # 8 Chunks
-    arr = get_dask_array_from_hdf5(ARRAY_FILEPATH, '/data', logic_cs=cs)
-    
-    dask.config.set({
-        'io-optimizer': {
-            'memory_available': 4 * ONE_GIG
-        }
-    })
+@pytest.fixture(params=[(770, 605, 700)])
+def case(request):
+    buffer_size = 4 * ONE_GIG
+    enable_clustering(buffer_size, mem_limit=True)
 
+    path = './big_array_nochunk.hdf5'
+    if not pytest.test_array_path:
+        create_test_array_nochunk(path, (1540, 1210, 1400))
+        pytest.test_array_path = path
+        
+    cs = request.param  
+    arr = get_dask_array_from_hdf5(path, '/data', logic_cs=cs)
+
+    # test case description below:
     # take a block of size half the size of array (4 blocks)
-    shape, chunks, blocks_dims = get_arr_shapes(arr)
+    _, chunks, blocks_dims = get_arr_shapes(arr)
     _3d_pos = numeric_to_3d_pos(5, blocks_dims, 'C')
     dims = [(_3d_pos[0]+1) * chunks[0],
             (_3d_pos[1]+1) * chunks[1],
             (_3d_pos[2]+1) * chunks[2]]
     arr = arr[0:dims[0], 0:dims[1], 0:dims[2]]
     arr = arr + 1
-    return arr, cs
+    return (arr, cs)
+
+
+# TODO: make tests with different chunk shapes
 
 
 def test_get_covered_blocks():
@@ -51,9 +58,9 @@ def test_get_covered_blocks():
     assert [list(r) for r in ranges] == [[0], [0], [0]]
 
 
-def test_get_blocks_used():
-    # case 1 : continous blocks
-    arr, cs = get_case_1()
+def test_get_blocks_used(case):
+    # case 1 : contiguous blocks
+    arr, cs = case
 
     # routine to get the needed data
     # we assume those functions have been tested before get_blocks_used
@@ -71,7 +78,7 @@ def test_get_blocks_used():
     assert blocks_used == expected
 
 
-def test_create_buffers():
+def test_create_buffers(case):
     """
     row size = 7 blocks
     slices size = 35 blocks
@@ -85,7 +92,7 @@ def test_create_buffers():
     """
 
     # case 1 : continous blocks
-    arr, cs = get_case_1()
+    arr, cs = case
 
     _, dicts = get_used_proxies(arr.dask.dicts)
     origarr_name = list(dicts['origarr_to_obj'].keys())[0]
@@ -98,9 +105,9 @@ def test_create_buffers():
     assert buffers == expected
 
 
-def test_create_buffer_node():
+def test_create_buffer_node(case):
     # preparation
-    arr, cs = get_case_1()
+    arr, cs = case
     graph = arr.dask.dicts
     _, dicts = get_used_proxies(graph)
     origarr_name = list(dicts['origarr_to_obj'].keys())[0]
