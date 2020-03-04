@@ -9,11 +9,12 @@ from dask_io.utils.get_arrays import get_dask_array_from_hdf5
 from dask_io.optimizer.modifiers import get_used_proxies
 from dask_io.optimizer.clustered import *  # package being tested
 
-from ..utils import create_test_array_nochunk
+from ..utils import create_test_array_nochunk, ONE_GIG
 
 pytest.test_array_path = None
 
 
+# TODO: make tests with different chunk shapes
 @pytest.fixture(params=[(770, 605, 700)])
 def case(request):
     buffer_size = 4 * ONE_GIG
@@ -39,9 +40,6 @@ def case(request):
     return (arr, cs)
 
 
-# TODO: make tests with different chunk shapes
-
-
 def test_get_covered_blocks():
     """
     Remainder: 
@@ -59,7 +57,6 @@ def test_get_covered_blocks():
 
 
 def test_get_blocks_used(case):
-    # case 1 : contiguous blocks
     arr, cs = case
 
     # routine to get the needed data
@@ -90,8 +87,6 @@ def test_create_buffers(case):
     # 21 blocks contiguous and not overlaping then the last 14 blocks
     => strategy: buffer=row_size max 
     """
-
-    # case 1 : continous blocks
     arr, cs = case
 
     _, dicts = get_used_proxies(arr.dask.dicts)

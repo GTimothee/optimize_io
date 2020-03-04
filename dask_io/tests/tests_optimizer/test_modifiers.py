@@ -1,12 +1,29 @@
-import os
+import os, pytest
+
+from dask_io.main import enable_clustering
 from dask_io.utils.utils import CHUNK_SHAPES_EXP1
 from dask_io.utils.array_utils import get_arr_shapes
 from dask_io.cases.case_config import CaseConfig
 from dask_io.optimizer.modifiers import *  # package to be tested
 
+from ..utils import create_test_array_nochunk, ONE_GIG
+
+import logging
+
+LOGGER = logging.getLogger(__name__)
+pytest.test_array_path = None
+
 
 # TODO: make tests with different chunk shapes
-from ..utils import ARRAY_FILEPATH, LOG_DIR, setup_routine
+@pytest.fixture(autouse=True)
+def create_test_array():
+    buffer_size = 4 * ONE_GIG
+    enable_clustering(buffer_size, mem_limit=True)
+
+    path = './big_array_nochunk.hdf5'
+    if not pytest.test_array_path:
+        create_test_array_nochunk(path, (1540, 1210, 1400))
+        pytest.test_array_path = path
 
 
 def test_add_to_dict_of_lists():
@@ -33,24 +50,24 @@ def test_flatten_iterable():
 
 def test_get_graph_from_dask():
     # create config for the test
-    case = CaseConfig(ARRAY_FILEPATH, "auto")
+    case = CaseConfig(pytest.test_array_path, "auto")
     case.sum(nb_chunks=2)
     dask_array = case.get()
 
     # test function
     dask_graph = dask_array.dask.dicts 
     graph = get_graph_from_dask(dask_graph, undirected=False)
-    with open(os.path.join(LOG_DIR, 'get_graph_from_dask.txt'), "w+") as f:
-        for k, v in graph.items():
-            f.write("\n\n" + str(k))
-            f.write("\n" + str(v))
+    # with open(os.path.join(LOG_DIR, 'get_graph_from_dask.txt'), "w+") as f:
+    #     for k, v in graph.items():
+    #         f.write("\n\n" + str(k))
+    #         f.write("\n" + str(v))
 
 
 def used_proxies_tester(shapes_to_test):
     for chunk_shape_key in shapes_to_test:
         cs = CHUNK_SHAPES_EXP1[chunk_shape_key]
 
-        case = CaseConfig(ARRAY_FILEPATH, cs)
+        case = CaseConfig(pytest.test_array_path, cs)
         case.sum(nb_chunks=2)
         
         for use_BFS in [True]: #, False]:
@@ -155,7 +172,7 @@ def test_BFS_3():
     # get test array with logical rechunking
     chunks_shape = (770, 605, 700)
 
-    case = CaseConfig(ARRAY_FILEPATH, chunks_shape)
+    case = CaseConfig(pytest.test_array_path, chunks_shape)
     case.sum(nb_chunks=2)
     dask_array = case.get()
     # dask_array.visualize(filename='tests/outputs/img.png', optimize_graph=False)
@@ -163,10 +180,10 @@ def test_BFS_3():
     # get formatted graph for processing
     graph = get_graph_from_dask(dask_array.dask.dicts, undirected=False)  # we want a directed graph
 
-    with open(os.path.join(LOG_DIR, 'test_BFS_3.txt'), "w+") as f:
-        for k, v in graph.items():
-            f.write("\n\n" + str(k))
-            f.write("\n" + str(v))
+    # with open(os.path.join(LOG_DIR, 'test_BFS_3.txt'), "w+") as f:
+    #     for k, v in graph.items():
+    #         f.write("\n\n" + str(k))
+    #         f.write("\n" + str(v))
 
     # test the actual program
     root_nodes = get_unused_keys(graph)

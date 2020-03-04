@@ -71,7 +71,7 @@ class CaseConfig():
     def get(self):
         """ Get the case to compute from the configuration.
         """
-        arr = get_dask_array_from_hdf5(self.array_filepath, '/data', to_da=True, logic_cs=self.chunks_shape)
+        arr = get_dask_array_from_hdf5(self.array_filepath, '/data', logic_cs=self.chunks_shape)
 
         if self.case == None:
             print('No case defined, nothing to do.')
