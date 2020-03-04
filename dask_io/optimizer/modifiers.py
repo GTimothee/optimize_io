@@ -47,24 +47,31 @@ def flatten_iterable(l, plain_list=list()):
 
 
 def standard_BFS(root, graph):
+    """ Apply a standard breadth first search algorithm on a graph stored in a dictionary.
+
+    return: 
+    -------
+        visited: list of graph nodes reachable from root
+        max_depth: the maximum depth reached during the process i.e. the depth of the tree.
+    """
     nodes = list(graph.keys())
     queue = [(root, 0)]
     visited = [root]
 
-    out_dir = os.environ.get('OUTPUT_DIR')
     max_depth = 0
     while len(queue) > 0:
         node, depth = queue.pop(0)
 
-        # not related
         if depth > max_depth:
             max_depth = depth
 
-        # specific to our problem (because of remade graph)
-        if not isinstance(node, collections.Hashable) or not node in graph:  
+        try:  # we want to stop digging when node is a value i.e. a leaf
+            hash(node)
+            if not node in graph:  
+                continue
+        except:
             continue
 
-        # algorithm
         neighbors = graph[node]
         for n in neighbors:
             if not n in visited:
