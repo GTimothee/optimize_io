@@ -218,28 +218,23 @@ def get_unused_keys(remade_graph):
     return unused_keys
 
 
-def get_used_proxies(graph, use_BFS=True):
-    """ go through graph and find the proxies that are used by other tasks
-    proxy: task that use getitem directly on original-array
+def get_used_proxies(graph):
+    """ Find the proxies that are used by other tasks in the task graph.
+    We call ``proxy" a task that uses ``getitem" directly on the ``original-array".
     """
-    if not use_BFS:
-        remade_graph = get_graph_from_dask(graph, undirected=False)
-        unused_keys = get_unused_keys(remade_graph)
-        main_components = None
-    else:
-        remade_graph = get_graph_from_dask(graph, undirected=False)
-        root_nodes = get_unused_keys(remade_graph)
+    remade_graph = get_graph_from_dask(graph, undirected=False)
+    root_nodes = get_unused_keys(remade_graph)
 
-        main_components = list()
-        max_depth = 0
-        for root in root_nodes:
-            node_list, depth = standard_BFS(root, remade_graph)
-            if len(main_components) == 0 or depth > max_depth:
-                main_components = [node_list]
-                max_depth = depth
-            elif depth == max_depth:
-                main_components.append(node_list)
-        unused_keys = list()
+    main_components = list()
+    max_depth = 0
+    for root in root_nodes:
+        node_list, depth = standard_BFS(root, remade_graph)
+        if len(main_components) == 0 or depth > max_depth:
+            main_components = [node_list]
+            max_depth = depth
+        elif depth == max_depth:
+            main_components.append(node_list)
+    unused_keys = list()
 
     out_dir = os.environ.get('OUTPUT_DIR')
 
