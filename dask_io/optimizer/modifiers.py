@@ -4,46 +4,11 @@ import collections
 import numpy as np
 import datetime
 import logging
-from dask_io.utils.utils import LOG_TIME
+
 from collections import Hashable
 
-
-def add_to_dict_of_lists(d, k, v, unique=False):
-    """ if key does not exist, add a new list [value], else, 
-    append value to existing list corresponding to the key
-    """
-    if k not in d:
-        if v:
-            d[k] = [v]
-        else:
-            d[k] = list()
-    else:
-        if v and (unique and v not in d[k]) or not unique:
-            d[k].append(v)
-    return d
-
-
-def get_array_block_dims(shape, chunk_shape):
-    """ from shape of image and size of chukns=blocks, return the dimensions of the array in terms of blocks
-    i.e. number of blocks in each dimension
-    """
-    chunks = chunk_shape 
-    logging.debug(f'Chunks for get_array_block_dims: {chunks}')
-    if not len(shape) == len(chunks):
-        raise ValueError(
-            "chunks and shape should have the same dimension",
-            shape,
-            chunks)
-    return tuple([int(s / c) for s, c in zip(shape, chunks)])
-
-
-def flatten_iterable(l, plain_list=list()):
-    for e in l:
-        if isinstance(e, list) and not isinstance(e, (str, bytes)):
-            plain_list = flatten_iterable(e, plain_list)
-        else:
-            plain_list.append(e)
-    return plain_list
+from dask_io.utils.utils import LOG_TIME, add_to_dict_of_lists, flatten_iterable
+from dask_io.utils.array_utils import get_array_block_dims
 
 
 def standard_BFS(root, graph):
@@ -196,8 +161,9 @@ def search_dask_graph(graph, proxy_to_slices, proxy_to_dict, origarr_to_used_pro
     return 
 
 
-def get_unused_keys(remade_graph):
-    """ find keys in the graph that are not used as values by another(other) key(s)
+def get_root_nodes(remade_graph):
+    """ Find keys in the graph that are not used as values by another(other) key(s).
+    Some of those keys are root nodes of the graph. 
     """
     keys = list(remade_graph.keys())
     vals = list(remade_graph.values())
@@ -210,43 +176,39 @@ def get_unused_keys(remade_graph):
             flatten.append(e)
 
     # do the actual job
-    unused_keys = list()
+    root_nodes = list()
     for key in keys:
         if key not in flatten:
-            unused_keys.append(key)
+            root_nodes.append(key)
 
-    return unused_keys
+    return root_nodes
 
 
 def get_used_proxies(graph):
     """ Find the proxies that are used by other tasks in the task graph.
     We call ``proxy" a task that uses ``getitem" directly on the ``original-array".
     """
-    remade_graph = get_graph_from_dask(graph, undirected=False)
-    root_nodes = get_unused_keys(remade_graph)
 
+    # essayer de get rid of that en trouvant l'unique root node du graph
+    remade_graph = get_graph_from_dask(graph, undirected=False)
+    root_nodes = get_root_nodes(remade_graph)
     main_components = list()
     max_depth = 0
     for root in root_nodes:
-        node_list, depth = standard_BFS(root, remade_graph)
+        nodes_used_list, depth = standard_BFS(root, remade_graph)
         if len(main_components) == 0 or depth > max_depth:
-            main_components = [node_list]
+            main_components = [nodes_used_list]
             max_depth = depth
         elif depth == max_depth:
-            main_components.append(node_list)
-    unused_keys = list()
-
-    out_dir = os.environ.get('OUTPUT_DIR')
-
+            main_components.append(nodes_used_list)
+    
     # remade graph writing
-    """
-    rgraph_file_name = LOG_TIME + '_remade_graph.txt'.format(date=datetime.datetime.now())
-    with open(os.path.join(out_dir, rgraph_file_name), "w+") as f:
-        for k, v in remade_graph.items():
-            f.write("\n\n" + str(k))
-            f.write("\n" + str(v))
-    """
+    # logging.debug("\n\n REMADE GRAPH ---------------")
+    # for k, v in remade_graph.items():
+    #     logging.debug("\n\n k:" + str(k))
+    #     # logging.debug("\n v:" + str(v))
 
+    unused_keys = list()
     proxy_to_slices = dict()
     origarr_to_used_proxies = dict()
     origarr_to_obj = dict()
@@ -265,6 +227,9 @@ def get_used_proxies(graph):
     # find chunk shape (to be replaced)
     #-------------------------------------------------------------
     
+    if not len(list(proxy_to_slices.keys())) > 0:
+        return None, None
+
     first_key = list(proxy_to_slices.keys())[0]
     sample_slices = proxy_to_slices[first_key]
     chunk_shape = list()

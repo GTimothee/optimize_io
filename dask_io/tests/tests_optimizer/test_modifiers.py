@@ -75,7 +75,7 @@ def used_proxies_tester(shapes_to_test):
 
             # test function
             dask_graph = dask_array.dask.dicts 
-            _, dicts = get_used_proxies(dask_graph, use_BFS=True)
+            _, dicts = get_used_proxies(dask_graph)
             
             # test slices values
             slices = list(dicts['proxy_to_slices'].values())
@@ -124,7 +124,7 @@ def test_BFS():
     assert depth == 1
 
 
-def test_get_unused_keys():
+def test_get_root_nodes():
     graph = {
         'a': ['b', 'c'],
         'b': [],
@@ -133,7 +133,7 @@ def test_get_unused_keys():
         'e': [],
         'f': ['e']
     }
-    root_nodes = get_unused_keys(graph)
+    root_nodes = get_root_nodes(graph)
     assert root_nodes == ['a', 'f']
 
 
@@ -148,7 +148,7 @@ def test_BFS_2():
         'e': [],
         'f': ['e']
     }
-    root_nodes = get_unused_keys(graph)
+    root_nodes = get_root_nodes(graph)
 
     max_components = list()
     max_depth = 0
@@ -186,7 +186,7 @@ def test_BFS_3():
     #         f.write("\n" + str(v))
 
     # test the actual program
-    root_nodes = get_unused_keys(graph)
+    root_nodes = get_root_nodes(graph)
     print('\nRoot nodes:')
     for root in root_nodes:
         print(root)

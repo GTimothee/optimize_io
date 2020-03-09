@@ -48,3 +48,27 @@ def create_csv_file(filepath, columns, delimiter=',', mode='w+'):
         print(traceback.format_exc())
         print("An error occured while attempting to create/write csv file.")
         exit(1)
+
+
+def add_to_dict_of_lists(d, k, v, unique=False):
+    """ if key does not exist, add a new list [value], else, 
+    append value to existing list corresponding to the key
+    """
+    if k not in d:
+        if v:
+            d[k] = [v]
+        else:
+            d[k] = list()
+    else:
+        if v and (unique and v not in d[k]) or not unique:
+            d[k].append(v)
+    return d
+
+
+def flatten_iterable(l, plain_list=list()):
+    for e in l:
+        if isinstance(e, list) and not isinstance(e, (str, bytes)):
+            plain_list = flatten_iterable(e, plain_list)
+        else:
+            plain_list.append(e)
+    return plain_list

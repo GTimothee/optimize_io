@@ -2,6 +2,20 @@ from h5py import Dataset
 import dask
 
 
+def get_array_block_dims(shape, chunk_shape):
+    """ from shape of image and size of chukns=blocks, return the dimensions of the array in terms of blocks
+    i.e. number of blocks in each dimension
+    """
+    chunks = chunk_shape 
+    logging.debug(f'Chunks for get_array_block_dims: {chunks}')
+    if not len(shape) == len(chunks):
+        raise ValueError(
+            "chunks and shape should have the same dimension",
+            shape,
+            chunks)
+    return tuple([int(s / c) for s, c in zip(shape, chunks)])
+
+
 def get_arr_shapes(arr, dtype=False):
     """ Routine that returns shape information on from dask array.
 

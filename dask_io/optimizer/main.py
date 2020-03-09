@@ -23,6 +23,9 @@ def clustered_optimization(graph):
     print("Finding proxies.")
     chunk_shape, dicts = get_used_proxies(graph)
 
+    if chunk_shape == None or dicts == None:
+        return graph
+
     print("Launching optimization algorithm.") 
     apply_clustered_strategy(graph, dicts, chunk_shape)
     return graph
