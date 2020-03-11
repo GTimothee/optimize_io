@@ -14,23 +14,19 @@ def clean_files():
     """ Clean the global list of opened files that are being used to create dask arrays. 
     """
     for f in SOURCE_FILES:
-        try:
-            f.close()
-        except:
-            continue # remove this error handling when file_in_list will be operational
+        f.close()
 
 
-# def file_in_list(file_pointer, file_list):
-#     """ Check if a file pointer points to the same file than another file pointer in the file_list.
-#     """
-#     stat = os.fstat(file_pointer.fileno())
+def file_in_list(file_pointer, file_list):
+    """ Check if a file pointer points to the same file than another file pointer in the file_list.
+    """
+    stat = os.fstat(file_pointer.fileno())
 
-#     for fp in file_list:
-#         fstat = os.fstat(fp.fileno())
-#         if (fstat.st_ino == stat.st_ino and fstat.st_dev == stat.st_dev):
-#             return True 
+    for fp in file_list:
+        if file_pointer == fp
+            return True 
 
-#     return False
+    return False
 
 
 def get_dataset(file_path, dataset_key):
@@ -53,8 +49,8 @@ def get_dataset(file_path, dataset_key):
     if not f.keys():
         raise ValueError('No dataset found in the input file. Aborting.')
 
-    # if not file_in_list(f, SOURCE_FILES): # remettre this  when file_in_list will be operational
-    SOURCE_FILES.append(f)
+    if not file_in_list(f, SOURCE_FILES):
+        SOURCE_FILES.append(f)
 
     inspect_h5py_file(f)
 
