@@ -8,7 +8,7 @@ from logging.config import fileConfig
 
 from dask_io.optimizer.clustered import apply_clustered_strategy
 from dask_io.optimizer.find_proxies import get_used_proxies, get_array_block_dims
-from dask_io.utils.utils import LOG_TIME, LOG_DIR
+from dask_io.optimizer.utils import LOG_TIME, LOG_DIR
 
 fileConfig('logging_config.ini')
 logger = logging.getLogger(name).addHandler(logging.NullHandler())
@@ -49,4 +49,4 @@ def optimize_func(dsk, keys):
     dask_graph = dsk.dicts
     dask_graph = clustered_optimization(dask_graph)
     logger.info("Time spent to create the graph: {0:.2f} milliseconds.".format((time.time() - t) * 1000))
-    return dsk
+    return dask_graph
