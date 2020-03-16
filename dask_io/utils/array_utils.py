@@ -1,5 +1,6 @@
 from h5py import Dataset
 import dask
+import logging
 
 
 def get_array_block_dims(shape, chunk_shape):

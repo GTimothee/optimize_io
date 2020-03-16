@@ -10,6 +10,11 @@ from collections import Hashable
 from dask_io.utils.utils import LOG_TIME, add_to_dict_of_lists, flatten_iterable
 from dask_io.utils.array_utils import get_array_block_dims
 
+"""
+
+
+"""
+
 
 def standard_BFS(root, graph):
     """ Apply a standard breadth first search algorithm on a graph stored in a dictionary.
@@ -188,10 +193,10 @@ def get_used_proxies(graph):
     """ Find the proxies that are used by other tasks in the task graph.
     We call ``proxy" a task that uses ``getitem" directly on the ``original-array".
     """
-
-    # essayer de get rid of that en trouvant l'unique root node du graph
     remade_graph = get_graph_from_dask(graph, undirected=False)
     root_nodes = get_root_nodes(remade_graph)
+    
+    # for each root do bfs
     main_components = list()
     max_depth = 0
     for root in root_nodes:
@@ -201,12 +206,6 @@ def get_used_proxies(graph):
             max_depth = depth
         elif depth == max_depth:
             main_components.append(nodes_used_list)
-    
-    # remade graph writing
-    # logging.debug("\n\n REMADE GRAPH ---------------")
-    # for k, v in remade_graph.items():
-    #     logging.debug("\n\n k:" + str(k))
-    #     # logging.debug("\n v:" + str(v))
 
     unused_keys = list()
     proxy_to_slices = dict()

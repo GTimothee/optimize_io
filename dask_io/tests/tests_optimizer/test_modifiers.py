@@ -13,26 +13,19 @@ import logging
 LOGGER = logging.getLogger(__name__)
 pytest.test_array_path = None
 
+buffer_size = 4 * ONE_GIG
+path = '/run/media/user/HDD 1TB/data/big_array_nochunk.hdf5'
+
 
 # TODO: make tests with different chunk shapes
+# TODO: use smaller test array
 @pytest.fixture(autouse=True)
 def create_test_array():
-    buffer_size = 4 * ONE_GIG
     enable_clustering(buffer_size, mem_limit=True)
 
-    path = './big_array_nochunk.hdf5'
     if not pytest.test_array_path:
         create_test_array_nochunk(path, (1540, 1210, 1400))
         pytest.test_array_path = path
-
-
-def test_add_to_dict_of_lists():
-    d = {'a': [1], 'c': [5, 6]}
-    d = add_to_dict_of_lists(d, 'b', 2)
-    d = add_to_dict_of_lists(d, 'b', 3)
-    d = add_to_dict_of_lists(d, 'c', 4)
-    expected = {'a': [1], 'b': [2, 3], 'c': [5, 6, 4]}
-    assert expected == d
 
 
 def test_get_array_block_dims():
@@ -41,11 +34,6 @@ def test_get_array_block_dims():
     block_dims = get_array_block_dims(shape, chunks)
     expected = (5, 4, 15)
     assert block_dims == expected
-
-
-def test_flatten_iterable():
-    l = [0, [1, 2, 3], 4, [5], [[6, 7]]]
-    assert flatten_iterable(l, list()) == list(range(8))
 
 
 def test_get_graph_from_dask():
@@ -58,7 +46,7 @@ def test_get_graph_from_dask():
     dask_graph = dask_array.dask.dicts 
     graph = get_graph_from_dask(dask_graph, undirected=False)
     # with open(os.path.join(LOG_DIR, 'get_graph_from_dask.txt'), "w+") as f:
-    #     for k, v in graph.items():
+    #     for k, v in graph.items():    
     #         f.write("\n\n" + str(k))
     #         f.write("\n" + str(v))
 
@@ -187,9 +175,9 @@ def test_BFS_3():
 
     # test the actual program
     root_nodes = get_root_nodes(graph)
-    print('\nRoot nodes:')
+    """print('\nRoot nodes:')
     for root in root_nodes:
-        print(root)
+        print(root)"""
 
     max_components = list()
     max_depth = 0

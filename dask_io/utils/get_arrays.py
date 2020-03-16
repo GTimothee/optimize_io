@@ -20,10 +20,8 @@ def clean_files():
 def file_in_list(file_pointer, file_list):
     """ Check if a file pointer points to the same file than another file pointer in the file_list.
     """
-    stat = os.fstat(file_pointer.fileno())
-
     for fp in file_list:
-        if file_pointer == fp
+        if file_pointer == fp:
             return True 
 
     return False
