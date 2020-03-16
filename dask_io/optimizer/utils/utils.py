@@ -6,12 +6,10 @@ import traceback
 
 ONE_GIG = 1000000000
 SUB_BIGBRAIN_SHAPE = (1540, 1610, 1400)
-LOG_TIME = '{date:%Y-%m-%d_%H:%M:%S}'.format(date=datetime.datetime.now())
 CHUNK_SHAPES_EXP1 = {'slabs_dask_interpol': ('auto', (1210), (1400)), 
                     'slabs_previous_exp': (7, (1210), (1400)),
                     'blocks_dask_interpol': (220, 242, 200), 
                     'blocks_previous_exp': (770, 605, 700)}
-LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../logs")
 
 
 def flush_cache():

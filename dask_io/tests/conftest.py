@@ -4,11 +4,14 @@ import tempfile
 
 import logging
 from logging.config import fileConfig
-from datetime import datetime 
+import datetime 
 date_info = datetime.datetime.now().isoformat()
-fileConfig('logging_config.ini', defaults={'logfilename': os.path.join('/var/log/dask_io_test', date_info, '.log')})
-logger = logging.getLogger(name)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+logfilename = '/tmp/dask_io_test' + date_info + '.log'
+fileConfig(os.path.join(current_dir, 'logging_config.ini'), defaults={'logfilename': logfilename})
+logger = logging.getLogger(__name__)
 
+print("[dask_io] Log file at: ", logfilename)
 
 @pytest.fixture(scope="session", autouse=True)
 def temporary_directory(): 

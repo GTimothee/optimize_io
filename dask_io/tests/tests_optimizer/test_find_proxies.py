@@ -1,16 +1,16 @@
 import os, pytest
 
-from dask_io.main import enable_clustering
-from dask_io.utils.utils import CHUNK_SHAPES_EXP1
-from dask_io.utils.array_utils import get_arr_shapes
-from dask_io.cases.case_config import CaseConfig
+from dask_io.optimizer.configure import enable_clustering
+from dask_io.optimizer.utils.utils import CHUNK_SHAPES_EXP1
+from dask_io.optimizer.utils.array_utils import get_arr_shapes
+from dask_io.optimizer.cases.case_config import CaseConfig
 from dask_io.optimizer.find_proxies import *  # package to be tested
 
 from ..utils import create_test_array_nochunk, ONE_GIG
 
 import logging
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 pytest.test_array_path = None
 
 buffer_size = 4 * ONE_GIG
@@ -75,13 +75,13 @@ def used_proxies_tester(shapes_to_test):
                 s1 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
                 s2 = (slice(cs[0], 2 * cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
 
-            print("\nExpecting:")
-            print(s1)
-            print(s2)
+            logger.info("\nExpecting:")
+            logger.info(s1)
+            logger.info(s2)
 
-            print("\nGot:")
-            print(slices[0])
-            print(slices[1])
+            logger.info("\nGot:")
+            logger.info(slices[0])
+            logger.info(slices[1])
 
             assert slices == [s1, s2]
 
@@ -175,9 +175,9 @@ def test_BFS_3():
 
     # test the actual program
     root_nodes = get_root_nodes(graph)
-    """print('\nRoot nodes:')
+    """logger.info('\nRoot nodes:')
     for root in root_nodes:
-        print(root)"""
+        logger.info(root)"""
 
     max_components = list()
     max_depth = 0
@@ -190,5 +190,5 @@ def test_BFS_3():
             max_components.append(node_list)
 
 
-    print("nb components found:", str(len(max_components)))
+    logger.info("nb components found: %s", str(len(max_components)))
     #TODO: assertions

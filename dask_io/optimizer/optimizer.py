@@ -6,12 +6,12 @@ import datetime
 import logging
 from logging.config import fileConfig
 
-from dask_io.optimizer.clustered import apply_clustered_strategy
+from dask_io.optimizer.clustering import apply_clustered_strategy
 from dask_io.optimizer.find_proxies import get_used_proxies, get_array_block_dims
-from dask_io.optimizer.utils import LOG_TIME, LOG_DIR
 
-fileConfig('logging_config.ini')
-logger = logging.getLogger(name).addHandler(logging.NullHandler())
+current_dir = os.path.dirname(os.path.abspath(__file__))
+fileConfig(os.path.join(current_dir, 'logging_config.ini')) 
+logger = logging.getLogger(__name__) #.addHandler(logging.NullHandler())
 
 
 def clustered_optimization(graph):

@@ -2,12 +2,12 @@ import os
 import sys
 import pytest
 
-from dask_io.main import enable_clustering
-from dask_io.cases.case_config import CaseConfig
-from dask_io.utils.array_utils import get_arr_shapes
-from dask_io.utils.get_arrays import get_dask_array_from_hdf5
-from dask_io.optimizer.modifiers import get_used_proxies
-from dask_io.optimizer.clustered import *  # package being tested
+from dask_io.optimizer.configure import enable_clustering
+from dask_io.optimizer.cases.case_config import CaseConfig
+from dask_io.optimizer.utils.array_utils import get_arr_shapes
+from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
+from dask_io.optimizer.find_proxies import get_used_proxies
+from dask_io.optimizer.clustering import *  # package being tested
 
 from ..utils import create_test_array_nochunk, ONE_GIG
 

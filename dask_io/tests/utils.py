@@ -1,6 +1,6 @@
 import os, pytest
 import numpy as np
-from dask_io.utils.get_arrays import create_random_dask_array, save_to_hdf5
+from dask_io.optimizer.utils.get_arrays import create_random_dask_array, save_to_hdf5
 
 ONE_GIG = 1000000000
 

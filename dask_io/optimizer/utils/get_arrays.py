@@ -3,7 +3,7 @@ import dask
 import dask.array as da
 import os
 import h5py
-from dask_io.utils.array_utils import inspect_h5py_file
+from dask_io.optimizer.utils.array_utils import inspect_h5py_file
 
 
 SOURCE_FILES = list() # opened files to be closed after processing 

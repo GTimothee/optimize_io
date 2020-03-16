@@ -1,5 +1,9 @@
+import logging
 import dask.array as da
-from dask_io.utils.array_utils import get_arr_shapes, get_arr_shapes
+
+from dask_io.optimizer.utils.array_utils import get_arr_shapes, get_arr_shapes
+
+logger = logging.getLogger(__name__)
 
 
 def get_arr_chunks(arr, nb_chunks=None):
@@ -68,8 +72,8 @@ def split_to_hdf5(arr, f, nb_blocks=None):
 
     for i, a in enumerate(arr_list):
         key = '/data' + str(i)
-        print("creating chunk in hdf5 dataset -> dataset path: ", key)
-        print("storing chunk of shape", a.shape)
+        logger.info("creating chunk in hdf5 dataset -> dataset path: ", key)
+        logger.info("storing chunk of shape", a.shape)
         datasets.append(f.create_dataset(key, shape=a.shape))
 
     return da.store(arr_list, datasets, compute=False)

@@ -7,9 +7,10 @@ import logging
 
 from collections import Hashable
 
-from dask_io.utils.utils import LOG_TIME, add_to_dict_of_lists, flatten_iterable
-from dask_io.utils.array_utils import get_array_block_dims
+from dask_io.optimizer.utils.utils import add_to_dict_of_lists, flatten_iterable
+from dask_io.optimizer.utils.array_utils import get_array_block_dims
 
+logger = logging.getLogger(__name__)
 
 """
     get_used_proxies:
@@ -255,7 +256,7 @@ def get_used_proxies(graph):
     origarr_to_blocks_shape = dict()
     for key, obj in origarr_to_obj.items():
         blocks_dims = get_array_block_dims(obj.shape, chunk_shape)
-        logging.debug(f'Found following block dimensions: {blocks_dims}')
+        logger.debug(f'Found following block dimensions: {blocks_dims}')
         origarr_to_blocks_shape[key] = blocks_dims 
         # warning on above line: 
         # if more than one original array and different chunk shapes it will not work

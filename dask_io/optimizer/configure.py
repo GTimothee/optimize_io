@@ -1,4 +1,4 @@
-from dask_io.optimizer.main import optimize_func
+from dask_io.optimizer.optimizer import optimize_func
 import dask 
 
 

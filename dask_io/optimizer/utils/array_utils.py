@@ -2,13 +2,15 @@ from h5py import Dataset
 import dask
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 def get_array_block_dims(shape, chunk_shape):
     """ from shape of image and size of chukns=blocks, return the dimensions of the array in terms of blocks
     i.e. number of blocks in each dimension
     """
     chunks = chunk_shape 
-    logging.debug(f'Chunks for get_array_block_dims: {chunks}')
+    logger.debug(f'Chunks for get_array_block_dims: {chunks}')
     if not len(shape) == len(chunks):
         raise ValueError(
             "chunks and shape should have the same dimension",

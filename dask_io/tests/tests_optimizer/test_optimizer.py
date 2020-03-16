@@ -2,17 +2,20 @@ import os
 import h5py
 import numpy as np
 
-from dask_io.tests.custom_setup import setup_custom_dask
-setup_custom_dask()
+with open('dask_io/config.json') as json_conffile:
+    import json
+    data = json.load(json_conffile)
+    import sys
+    sys.path.insert(0, data['dask_path'])
 
 import dask
 import dask.array as da
 
-from dask_io.cases.case_config import CaseConfig
-from dask_io.cases.case_creation import get_arr_chunks
-from dask_io.main import enable_clustering, disable_clustering
-from dask_io.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
-from dask_io.utils.get_arrays import get_dask_array_from_hdf5
+from dask_io.optimizer.cases.case_config import CaseConfig
+from dask_io.optimizer.cases.case_creation import get_arr_chunks
+from dask_io.optimizer.configure import enable_clustering, disable_clustering
+from dask_io.optimizer.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
+from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
 
 from ..utils import ARRAY_FILEPATH, DATA_DIRPATH, setup_routine
 
