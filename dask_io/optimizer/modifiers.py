@@ -10,9 +10,22 @@ from collections import Hashable
 from dask_io.utils.utils import LOG_TIME, add_to_dict_of_lists, flatten_iterable
 from dask_io.utils.array_utils import get_array_block_dims
 
+
 """
+    get_used_proxies:
+        Main function of the module.
+        Find the proxies that are used by other tasks in the task graph.
 
+    standard BFS: 
+        A standard breadth first search algorithm to find the different trees in the graph.
 
+    get_graph_from_dask: 
+        Convert a dask graph (output of array.dask.dicts) 
+        into a graph in mathematical format i.e. a dictionary mapping 
+        each node with its dependencies.
+
+    search_dask_graph:
+        Search proxies in the remade graph and fill in dictionaries to store information.
 """
 
 
