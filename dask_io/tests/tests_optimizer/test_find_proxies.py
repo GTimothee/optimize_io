@@ -4,7 +4,7 @@ from dask_io.main import enable_clustering
 from dask_io.utils.utils import CHUNK_SHAPES_EXP1
 from dask_io.utils.array_utils import get_arr_shapes
 from dask_io.cases.case_config import CaseConfig
-from dask_io.optimizer.modifiers import *  # package to be tested
+from dask_io.optimizer.find_proxies import *  # package to be tested
 
 from ..utils import create_test_array_nochunk, ONE_GIG
 

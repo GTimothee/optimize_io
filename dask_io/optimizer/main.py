@@ -7,7 +7,7 @@ import logging
 from logging.config import fileConfig
 
 from dask_io.optimizer.clustered import apply_clustered_strategy
-from dask_io.optimizer.modifiers import get_used_proxies, get_array_block_dims
+from dask_io.optimizer.find_proxies import get_used_proxies, get_array_block_dims
 from dask_io.utils.utils import LOG_TIME, LOG_DIR
 
 fileConfig('logging_config.ini')
