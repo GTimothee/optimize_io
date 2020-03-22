@@ -13,6 +13,7 @@ from ..utils import create_test_array_nochunk, ONE_GIG
 
 pytest.test_array_path = None
 
+path = '/run/media/user/HDD 1TB/data/big_array_nochunk.hdf5'
 
 # TODO: make tests with different chunk shapes
 @pytest.fixture(params=[(770, 605, 700)])
@@ -20,7 +21,6 @@ def case(request):
     buffer_size = 4 * ONE_GIG
     enable_clustering(buffer_size, mem_limit=True)
 
-    path = './big_array_nochunk.hdf5'
     if not pytest.test_array_path:
         create_test_array_nochunk(path, (1540, 1210, 1400))
         pytest.test_array_path = path
