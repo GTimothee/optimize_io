@@ -39,7 +39,7 @@ def test_get_array_block_dims():
 def test_get_graph_from_dask():
     # create config for the test
     case = CaseConfig(pytest.test_array_path, "auto")
-    case.sum(nb_chunks=2)
+    case.sum(nb_chunks=None)
     dask_array = case.get()
 
     # test function
@@ -51,47 +51,47 @@ def test_get_graph_from_dask():
     #         f.write("\n" + str(v))
 
 
-def used_proxies_tester(shapes_to_test):
-    for chunk_shape_key in shapes_to_test:
-        cs = CHUNK_SHAPES_EXP1[chunk_shape_key]
+# def used_proxies_tester(shapes_to_test):
+#     for chunk_shape_key in shapes_to_test:
+#         cs = CHUNK_SHAPES_EXP1[chunk_shape_key]
 
-        case = CaseConfig(pytest.test_array_path, cs)
-        case.sum(nb_chunks=2)
+#         case = CaseConfig(pytest.test_array_path, cs)
+#         case.sum(nb_chunks=2)
         
-        for use_BFS in [True]: #, False]:
-            dask_array = case.get()
+#         for use_BFS in [True]: #, False]:
+#             dask_array = case.get()
 
-            # test function
-            dask_graph = dask_array.dask.dicts 
-            _, dicts = get_used_proxies(dask_graph)
+#             # test function
+#             dask_graph = dask_array.dask.dicts 
+#             _, dicts = get_used_proxies(dask_graph)
             
-            # test slices values
-            slices = list(dicts['proxy_to_slices'].values())
+#             # test slices values
+#             slices = list(dicts['proxy_to_slices'].values())
 
-            if "blocks" in chunk_shape_key:
-                s1 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
-                s2 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(cs[2], 2 * cs[2], None))
-            else:
-                s1 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
-                s2 = (slice(cs[0], 2 * cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
+#             if "blocks" in chunk_shape_key:
+#                 s1 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
+#                 s2 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(cs[2], 2 * cs[2], None))
+#             else:
+#                 s1 = (slice(0, cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
+#                 s2 = (slice(cs[0], 2 * cs[0], None), slice(0, cs[1], None), slice(0, cs[2], None))
 
-            logger.info("\nExpecting:")
-            logger.info(s1)
-            logger.info(s2)
+#             logger.info("\nExpecting:")
+#             logger.info(s1)
+#             logger.info(s2)
 
-            logger.info("\nGot:")
-            logger.info(slices[0])
-            logger.info(slices[1])
+#             logger.info("\nGot:")
+#             logger.info(slices[0])
+#             logger.info(slices[1])
 
-            assert slices == [s1, s2]
-
-
-def test_get_used_proxies_blocks():
-    used_proxies_tester(['blocks_previous_exp', 'blocks_dask_interpol'])
+#             assert slices == [s1, s2]
 
 
-def test_get_used_proxies_slabs():
-    used_proxies_tester(['slabs_previous_exp'])
+# def test_get_used_proxies_blocks():
+#     used_proxies_tester(['blocks_previous_exp', 'blocks_dask_interpol'])
+
+
+# def test_get_used_proxies_slabs():
+#     used_proxies_tester(['slabs_previous_exp'])
 
 
 def test_BFS():
@@ -161,7 +161,7 @@ def test_BFS_3():
     chunks_shape = (770, 605, 700)
 
     case = CaseConfig(pytest.test_array_path, chunks_shape)
-    case.sum(nb_chunks=2)
+    case.sum(nb_chunks=None)
     dask_array = case.get()
     # dask_array.visualize(filename='tests/outputs/img.png', optimize_graph=False)
 

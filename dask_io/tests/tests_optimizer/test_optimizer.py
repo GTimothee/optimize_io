@@ -46,7 +46,7 @@ def shape_to_test(request):
     return request.param 
 
 
-@pytest.fixture(params=list(range(4)))
+@pytest.fixture(params=[None]) # for the moment pass only None: all blocks are processed until solution find for get_used_proxies
 def nb_chunks(request):
     return request.param 
 
