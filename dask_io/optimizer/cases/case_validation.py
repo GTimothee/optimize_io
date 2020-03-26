@@ -23,47 +23,47 @@ def check_split_output_hdf5(input_filepath, output_filepath, logic_cs, input_dse
     """
 
     def sanity_check(file_path):
-        logger.info(f"\nChecking file integrity: {file_path}")
+        logger.debug(f"\nChecking file integrity: {file_path}")
         if os.path.isfile(file_path):
-            logger.info(f'File has been found.')
+            logger.debug(f'File has been found.')
         try:
             apply_sanity_check(file_path)
-            logger.info("Sanity check passed.")
+            logger.debug("Sanity check passed.")
             return True
         except:
-            logger.info('-' * 60)
+            logger.debug('-' * 60)
             traceback.print_exc(file=sys.stdout)
-            logger.info('-' * 60)
-            logger.info("Sanity check failed, aborting goodness of split checking.")
+            logger.debug('-' * 60)
+            logger.debug("Sanity check failed, aborting goodness of split checking.")
             return False
 
     def apply_sanity_check(file_path):
         """ Check if splitted file not empty.
         """
         with h5py.File(file_path, 'r') as f:
-            logger.info("file object %s", f)
-            logger.info("keys %s", list(f.keys()))
+            logger.debug("file object %s", f)
+            logger.debug("keys %s", list(f.keys()))
             assert len(list(f.keys())) != 0
-        logger.info("Integrity check passed.")
+        logger.debug("Integrity check passed.")
         
     if not sanity_check(input_filepath) or not sanity_check(output_filepath):
         return False
 
-    logger.info(f"\nChecking files data...")
+    logger.debug(f"\nChecking files data...")
     input_arr = get_dask_array_from_hdf5(input_filepath, input_dset_key, to_da=True, logic_cs=logic_cs)
     input_arr_list = get_arr_chunks(input_arr)
     nb_chunks = len(input_arr_list)
     with h5py.File(output_filepath, 'r') as split_file:
         for i, a in enumerate(input_arr_list):
             stored_a = da.from_array(split_file[output_dset_keyprefix + str(i)])
-            logger.info("Stored split shape: %s ", stored_a.shape)
+            logger.debug("Stored split shape: %s ", stored_a.shape)
             stored_a.rechunk(chunks=logic_cs)
-            logger.info("Split rechunked to: %s", stored_a.shape)
-            logger.info("Original data chunk: %s", a.shape)
-            logger.info("Testing all close...")
+            logger.debug("Split rechunked to: %s", stored_a.shape)
+            logger.debug("Original data chunk: %s", a.shape)
+            logger.debug("Testing all close...")
             test = da.allclose(stored_a, a)
             if test.compute():
-                logger.info(f"Test {i+1}/{nb_chunks} passed.")
+                logger.debug(f"Test {i+1}/{nb_chunks} passed.")
             else:
-                logger.info(f"Test {i+1}/{nb_chunks} failed.")
+                logger.debug(f"Test {i+1}/{nb_chunks} failed.")
     return True

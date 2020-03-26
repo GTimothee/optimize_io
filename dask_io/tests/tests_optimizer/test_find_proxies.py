@@ -10,7 +10,7 @@ from ..utils import create_test_array_nochunk, ONE_GIG
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('test')
 pytest.test_array_path = None
 
 buffer_size = 4 * ONE_GIG

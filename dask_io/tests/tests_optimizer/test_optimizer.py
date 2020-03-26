@@ -21,7 +21,7 @@ from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
 from ..utils import create_test_array_nochunk, ONE_GIG
 
 import logging 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('test')
 
 pytest.test_array_path = None
 

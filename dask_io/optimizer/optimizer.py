@@ -8,10 +8,11 @@ import logging
 from dask_io.optimizer.clustering import apply_clustered_strategy
 from dask_io.optimizer.find_proxies import get_used_proxies, get_array_block_dims
 
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# logging.config.fileConfig(os.path.join(current_dir, 'logging_config.ini')) 
+date_info = datetime.datetime.now().isoformat()
+current_dir = os.path.dirname(os.path.abspath(__file__))
+logfilename = '/tmp/dask_io_' + date_info + '.log'
+logging.config.fileConfig(os.path.join(current_dir, 'logging_config.ini'), defaults={'logfilename': logfilename})
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 def clustered_optimization(graph):
@@ -21,6 +22,7 @@ def clustered_optimization(graph):
     ----------
         graph : dark_array.dask.dicts
     """
+    logger.info("Log file: %s", logfilename)
     logger.info("Finding proxies.")
     chunk_shape, dicts = get_used_proxies(graph)
 

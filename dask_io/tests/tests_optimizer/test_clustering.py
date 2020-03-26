@@ -16,7 +16,7 @@ pytest.test_array_path = None
 path = '/run/media/user/HDD 1TB/data/big_array_nochunk.hdf5'
 
 import logging 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('test')
 
 # TODO: make tests with different chunk shapes
 @pytest.fixture(params=[(770, 605, 700)])
