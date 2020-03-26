@@ -217,10 +217,10 @@ def get_used_proxies(graph):
     remade_graph = get_graph_from_dask(graph, undirected=False)
     
     log_file_path = os.path.join('/tmp', 'dask_io_input_graph.log')
-    logger.info(f'Input graph log can be found at {log_file_path}')
+    logger.info('Input graph log can be found at %s', log_file_path)
     with open(log_file_path, "w+") as f:
         for k, v in graph.items():    
-            f.write("\n\n" + str(k))
+            f.write("\n\n " + str(k))
             f.write("\n" + str(v))
 
     all_nodes = list()
@@ -248,8 +248,9 @@ def get_used_proxies(graph):
     # create the new dictionary (to be replaced)
     origarr_to_blocks_shape = dict()
     for key, obj in origarr_to_obj.items():
+        logger.info("supposed to be original array: %s -> %s", key, obj)
         blocks_dims = get_array_block_dims(obj.shape, chunk_shape)
-        logger.debug(f'Found following block dimensions: {blocks_dims}')
+        logger.debug('Found following block dimensions: %s', blocks_dims)
         origarr_to_blocks_shape[key] = blocks_dims 
         # warning on above line: 
         # if more than one original array and different chunk shapes it will not work

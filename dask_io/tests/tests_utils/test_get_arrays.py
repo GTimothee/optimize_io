@@ -1,7 +1,7 @@
 import os 
 import pytest
 
-from dask_io.utils.get_arrays import get_dask_array_from_hdf5, get_dataset
+from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5, get_dataset
 
 from ..utils import create_test_array_nochunk
 

@@ -20,9 +20,9 @@ from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
 
 from ..utils import create_test_array_nochunk, ONE_GIG
 
-import logging
-
+import logging 
 logger = logging.getLogger(__name__)
+
 pytest.test_array_path = None
 
 buffer_size = 4 * ONE_GIG
@@ -32,11 +32,11 @@ path = './small_array_nochunk.hdf5'
 # TODO: make tests with different chunk shapes
 @pytest.fixture(autouse=True)
 def create_test_array():
-    enable_clustering(buffer_size, mem_limit=True)
-
     if not pytest.test_array_path:
         create_test_array_nochunk(path, (100, 100, 100))
         pytest.test_array_path = path
+
+    enable_clustering(buffer_size, mem_limit=True)
 
 
 @pytest.fixture(params=[(20, 20, 20), (50, 50, 50), (20, 100, 100), (1, 100, 100), (50, 20, 10)])
@@ -56,9 +56,11 @@ def optimized(request):
     return request.param 
 
 
-def test_sum_tester(shape_to_test, nb_chunks):
+def sum_tester(shape_to_test, nb_chunks):
     """ Test if the sum of two blocks yields the good result using our optimization function.
     """
+    logger.info("testing shape %s", shape_to_test)
+
     # prepare test case
     case = CaseConfig(pytest.test_array_path, shape_to_test)
     case.sum(nb_chunks)
@@ -88,29 +90,31 @@ def test_split(optimized, nb_chunks, shape_to_test):
         """
         logger.info("Checking split file integrity...")
         with h5py.File(split_filepath, 'r') as f:
-            logger.info("file", f)
-            logger.info("keys", list(f.keys()))
+            keys_list = list(f.keys())
+            logger.info("file : %s", f)
+            logger.info("Number of datasets in hdf5 file : %s", len(keys_list))
+            logger.info("First item: %s", keys_list[0])
             assert len(list(f.keys())) != 0
-        logger.info("Integrity check passed.")
+        logger.info("Integrity check passed.\n")
 
 
     def store_correct():
         """ Compare the real chunks to the splits to see if correctly splitted. 
         """
-        logger.info("Testing", len(arr_list), "matches...")
+        logger.info("Testing %s matches...", len(arr_list))
         with h5py.File(split_filepath, 'r') as f:
             for i, a in enumerate(arr_list):
                 stored_a = da.from_array(f['/data' + str(i)])
-                logger.info("split shape:", stored_a.shape)
+                # logger.info("split shape: %s", stored_a.shape)
                 
                 stored_a.rechunk(chunks=shape_to_test)
-                logger.info("split rechunked to:", stored_a.shape)
-                logger.info("will be compared to : ", a.shape)
-
-                logger.info("Testing all close...")
+                # logger.info("split rechunked to: %s", stored_a.shape)
+                # logger.info("will be compared to : %s ", a.shape)
+                # logger.info("Testing all close...")
                 test = da.allclose(stored_a, a)
+                disable_clustering() # TODO: remove this, make it work even for all close
                 assert test.compute()
-                logger.info("Passed.")
+        logger.info("Passed.\n")
         
 
     def split():
@@ -123,6 +127,10 @@ def test_split(optimized, nb_chunks, shape_to_test):
         case.get().compute()
         return 
 
+    logger.info("PARAMETERS:")
+    logger.info("Optimized: %s", optimized), nb_chunks, shape_to_test
+    logger.info("Nb_chunk: %s", nb_chunks)
+    logger.info("Shape: %s \n", shape_to_test)
 
     # setup config
     split_filepath = "./split_file.hdf5"

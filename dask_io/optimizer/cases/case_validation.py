@@ -41,8 +41,8 @@ def check_split_output_hdf5(input_filepath, output_filepath, logic_cs, input_dse
         """ Check if splitted file not empty.
         """
         with h5py.File(file_path, 'r') as f:
-            logger.info("file object", f)
-            logger.info("keys", list(f.keys()))
+            logger.info("file object %s", f)
+            logger.info("keys %s", list(f.keys()))
             assert len(list(f.keys())) != 0
         logger.info("Integrity check passed.")
         
@@ -56,10 +56,10 @@ def check_split_output_hdf5(input_filepath, output_filepath, logic_cs, input_dse
     with h5py.File(output_filepath, 'r') as split_file:
         for i, a in enumerate(input_arr_list):
             stored_a = da.from_array(split_file[output_dset_keyprefix + str(i)])
-            logger.info("Stored split shape:", stored_a.shape)
+            logger.info("Stored split shape: %s ", stored_a.shape)
             stored_a.rechunk(chunks=logic_cs)
-            logger.info("Split rechunked to:", stored_a.shape)
-            logger.info("Original data chunk: ", a.shape)
+            logger.info("Split rechunked to: %s", stored_a.shape)
+            logger.info("Original data chunk: %s", a.shape)
             logger.info("Testing all close...")
             test = da.allclose(stored_a, a)
             if test.compute():

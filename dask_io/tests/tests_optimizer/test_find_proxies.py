@@ -21,11 +21,11 @@ path = '/run/media/user/HDD 1TB/data/big_array_nochunk.hdf5'
 # TODO: use smaller test array
 @pytest.fixture(autouse=True)
 def create_test_array():
-    enable_clustering(buffer_size, mem_limit=True)
-
     if not pytest.test_array_path:
         create_test_array_nochunk(path, (1540, 1210, 1400))
         pytest.test_array_path = path
+
+    enable_clustering(buffer_size, mem_limit=True)
 
 
 def test_get_array_block_dims():

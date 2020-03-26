@@ -15,11 +15,13 @@ pytest.test_array_path = None
 
 path = '/run/media/user/HDD 1TB/data/big_array_nochunk.hdf5'
 
+import logging 
+logger = logging.getLogger(__name__)
+
 # TODO: make tests with different chunk shapes
 @pytest.fixture(params=[(770, 605, 700)])
 def case(request):
     buffer_size = 4 * ONE_GIG
-    enable_clustering(buffer_size, mem_limit=True)
 
     if not pytest.test_array_path:
         create_test_array_nochunk(path, (1540, 1210, 1400))
@@ -37,6 +39,8 @@ def case(request):
             (_3d_pos[2]+1) * chunks[2]]
     arr = arr[0:dims[0], 0:dims[1], 0:dims[2]]
     arr = arr + 1
+
+    enable_clustering(buffer_size, mem_limit=True)
     return (arr, cs)
 
 

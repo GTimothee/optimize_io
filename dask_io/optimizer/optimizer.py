@@ -4,14 +4,14 @@ import math
 import time
 import datetime 
 import logging
-from logging.config import fileConfig
 
 from dask_io.optimizer.clustering import apply_clustered_strategy
 from dask_io.optimizer.find_proxies import get_used_proxies, get_array_block_dims
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-fileConfig(os.path.join(current_dir, 'logging_config.ini')) 
-logger = logging.getLogger(__name__) #.addHandler(logging.NullHandler())
+# current_dir = os.path.dirname(os.path.abspath(__file__))
+# logging.config.fileConfig(os.path.join(current_dir, 'logging_config.ini')) 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def clustered_optimization(graph):
@@ -25,6 +25,7 @@ def clustered_optimization(graph):
     chunk_shape, dicts = get_used_proxies(graph)
 
     if chunk_shape == None or dicts == None:
+        logger.error("Chunk shape or dicts = None. Aborting dask_io optimization.")
         return graph
 
     logger.info("Launching optimization algorithm.") 
@@ -49,4 +50,11 @@ def optimize_func(dsk, keys):
     dask_graph = dsk.dicts
     dask_graph = clustered_optimization(dask_graph)
     logger.info("Time spent to create the graph: {0:.2f} milliseconds.".format((time.time() - t) * 1000))
-    return dask_graph
+
+    log_file_path = os.path.join('/tmp', 'dask_io_output_graph.log')
+    logger.info('Output graph log can be found at %s', log_file_path)
+    with open(log_file_path, "w+") as f:
+        for k, v in dask_graph.items():    
+            f.write("\n\n " + str(k))
+            f.write("\n" + str(v))
+    return dsk

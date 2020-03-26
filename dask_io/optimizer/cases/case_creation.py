@@ -72,8 +72,8 @@ def split_to_hdf5(arr, f, nb_blocks=None):
 
     for i, a in enumerate(arr_list):
         key = '/data' + str(i)
-        logger.info("creating chunk in hdf5 dataset -> dataset path: ", key)
-        logger.info("storing chunk of shape", a.shape)
+        logger.info("creating chunk in hdf5 dataset -> dataset path: %s", key)
+        logger.info("storing chunk of shape %s", a.shape)
         datasets.append(f.create_dataset(key, shape=a.shape))
 
     return da.store(arr_list, datasets, compute=False)
