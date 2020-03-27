@@ -34,7 +34,7 @@ def get_load_strategy(
         buffer_mem_size,
         cs,
         original_array_blocks_shape,
-        nb=2):
+        nb=2): # TODO: fix this problem
     """ Get clustered writes best load strategy given the memory available for io optimization.
 
     block_row_size = block_mem_size * original_array_blocks_shape[2]
