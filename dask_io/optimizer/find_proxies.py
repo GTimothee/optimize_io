@@ -12,12 +12,6 @@ from dask_io.optimizer.utils.array_utils import get_array_block_dims
 
 logger = logging.getLogger(__name__)
 
-unused_keys = list()
-proxy_to_slices = dict()
-origarr_to_used_proxies = dict()
-origarr_to_obj = dict()
-origarr_to_blocks_shape = dict()
-proxy_to_dict = dict()
 
 """
     get_used_proxies:
@@ -35,7 +29,6 @@ proxy_to_dict = dict()
     search_dask_graph:
         Search proxies in the remade graph and fill in dictionaries to store information.
 """
-
 
 def standard_BFS(root, graph):
     """ Apply a standard breadth first search algorithm on a graph stored in a dictionary.
@@ -142,7 +135,14 @@ def get_graph_from_dask(graph, undirected=False):
 
 
 #TODO : refactor
-def search_dask_graph(graph, main_components=None):
+def search_dask_graph(graph, 
+    main_components,
+    proxy_to_slices,
+    origarr_to_used_proxies,
+    origarr_to_obj,
+    origarr_to_blocks_shape,
+    proxy_to_dict,
+    unused_keys):
     """ Search proxies in the remade graph and fill in dictionaries to store information.
     """
 
@@ -150,7 +150,13 @@ def search_dask_graph(graph, main_components=None):
 
         # if it is a subgraph, recurse
         if isinstance(v, dict):
-            search_dask_graph(v, main_components)
+            search_dask_graph(v, main_components,
+            proxy_to_slices,
+            origarr_to_used_proxies,
+            origarr_to_obj,
+            origarr_to_blocks_shape,
+            proxy_to_dict,
+            unused_keys)
 
         # if it is an original array, store it
         elif isinstance(key, str) and "array-original" in key: # TODO: support other formats
@@ -214,6 +220,13 @@ def get_used_proxies(graph):
     """ Find the proxies that are used by other tasks in the task graph.
     We call ``proxy" a task that uses ``getitem" directly on the ``original-array".
     """
+    unused_keys = list()
+    proxy_to_slices = dict()
+    origarr_to_used_proxies = dict()
+    origarr_to_obj = dict()
+    origarr_to_blocks_shape = dict()
+    proxy_to_dict = dict()
+
     remade_graph = get_graph_from_dask(graph, undirected=False)
     
     log_file_path = os.path.join('/tmp', 'dask_io_input_graph.log')
@@ -228,7 +241,13 @@ def get_used_proxies(graph):
         nodes_used_list, depth = standard_BFS(root, remade_graph)
         all_nodes.append(nodes_used_list)
 
-    search_dask_graph(graph, all_nodes)
+    search_dask_graph(graph, all_nodes,
+    proxy_to_slices,
+    origarr_to_used_proxies,
+    origarr_to_obj,
+    origarr_to_blocks_shape,
+    proxy_to_dict,
+    unused_keys)
   
     # find chunk shape (to be replaced)
     #-------------------------------------------------------------
@@ -238,6 +257,7 @@ def get_used_proxies(graph):
 
     first_key = list(proxy_to_slices.keys())[0]
     sample_slices = proxy_to_slices[first_key]
+    logger.info("proxytoslices first_key %s: %s", first_key, sample_slices)    
     chunk_shape = list()
     for s in sample_slices:
         start = s.start

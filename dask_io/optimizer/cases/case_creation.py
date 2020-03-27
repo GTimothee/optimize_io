@@ -18,7 +18,17 @@ def get_arr_chunks(arr, nb_chunks=None):
     --------
         a list of dask arrays.
     """
-    _, chunk_shape, dims = get_arr_shapes(arr)
+    logger.info('CS of array passed to getarrchunks: %s', arr.chunks)
+    data = get_arr_shapes(arr)
+    if len(data) == 3:
+        _, chunk_shape, dims = data
+    elif len(data) == 4:
+        _, chunk_shape, dims, _ = data
+    else:
+        raise ValueError()
+
+    logger.info('CS found: %s', chunk_shape)
+
     arr_list = list()
     for i in range(dims[0]):
         for j in range(dims[1]):

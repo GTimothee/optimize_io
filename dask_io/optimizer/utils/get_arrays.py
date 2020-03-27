@@ -5,6 +5,8 @@ import os
 import h5py
 from dask_io.optimizer.utils.array_utils import inspect_h5py_file
 
+import logging
+logger = logging.getLogger(__name__)
 
 SOURCE_FILES = list() # opened files to be closed after processing 
 
@@ -91,6 +93,7 @@ def get_dask_array_from_hdf5(file_path, dataset_key, logic_cs="auto"):
             print("logic_cs set to `physical` but dataset not physically chunked. Using `auto` as logic_cs.")
             logic_cs = "auto"
     
+    logger.info("Creating dask array from file using chunk shape: %s", logic_cs)
     return da.from_array(dataset, chunks=logic_cs)
 
 

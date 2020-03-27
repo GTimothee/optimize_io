@@ -85,7 +85,7 @@ def create_test_array():
 #     assert blocks_used == expected
 
 
-def test_create_buffers():
+def test_create_buffers_blocks():
     """ Test if the buffering works according to clustered writes in all 3 possible configurations.
 
     Data:
@@ -100,7 +100,7 @@ def test_create_buffers():
     - nb blocks per slice = 25
     - block size in bytes : (20*20*20) * 2 bytes = 16000 
     """
-    cs = (20,20,20)
+    cs = (20, 20, 20)
     case = CaseConfig(pytest.test_array_path, cs)
     case.split_hdf5("./split_file.hdf5", nb_blocks=None)
     arr = case.get()
@@ -134,7 +134,7 @@ def test_create_buffers():
 
     nb_bytes_per_block = 20*20*20
     byte_size = 2
-    experiment_dict = {
+    experiment_params = {
         nb_bytes_per_block * byte_size : l1, # 1 block
         nb_bytes_per_block * byte_size *3: l2, # some blocks (3)
         nb_bytes_per_block * byte_size *5: l3, # 1 block column
@@ -144,7 +144,40 @@ def test_create_buffers():
         nb_bytes_per_block * byte_size *5*5*5: l7, # whole array
     }
 
-    for buffer_size, expected in experiment_dict.items():
+    for buffer_size, expected in experiment_params.items():
+        logging.info("\nTesting buffer %s", buffer_size)
+        logging.debug("Expecting %s", expected)
+        enable_clustering(buffer_size, mem_limit=True)
+        buffers = create_buffers(origarr_name, dicts, cs)
+        logging.debug("Got %s", buffers)
+        assert buffers == expected
+
+
+def test_create_buffers_slabs():
+    """ Test if the buffering works according to clustered writes when processing slabs.
+    The only strategy that should be used is ``block slices".
+    """
+    cs = (5, 100, 100) # 20 chunks
+    case = CaseConfig(pytest.test_array_path, cs)
+    case.split_hdf5("./split_file.hdf5", nb_blocks=None)
+    arr = case.get()
+
+    _, dicts = get_used_proxies(arr.dask.dicts)
+    origarr_name = list(dicts['origarr_to_obj'].keys())[0]
+
+    nb_bytes_per_block = 100*100*5
+    byte_size = 2
+    l1 = [[i] for i in range(20)]
+    l2 = [list(range(10)), list(range(10, 20))]
+    l3 = [list(range(7)), list(range(7, 14)), list(range(14,20))]
+
+    experiment_params = {
+        nb_bytes_per_block * byte_size: l1,
+        nb_bytes_per_block * byte_size*10: l2,
+        nb_bytes_per_block * byte_size*7: l3 
+    }
+
+    for buffer_size, expected in experiment_params.items():
         logging.info("\nTesting buffer %s", buffer_size)
         logging.debug("Expecting %s", expected)
         enable_clustering(buffer_size, mem_limit=True)
