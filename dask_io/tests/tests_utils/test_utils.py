@@ -1,3 +1,5 @@
+from dask_io.optimizer.utils.utils import add_to_dict_of_lists, flatten_iterable
+
 def test_add_to_dict_of_lists():
     d = {'a': [1], 'c': [5, 6]}
     d = add_to_dict_of_lists(d, 'b', 2)
