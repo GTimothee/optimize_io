@@ -1,4 +1,5 @@
-# dask_io
+# DASK IO
+[![Build Status](https://travis-ci.com/GTimothee/dask_io.svg?branch=tests)](https://travis-ci.com/GTimothee/dask_io)
 A module optimizing the task graph in Dask's threaded scheduler in order to faster I/O operations.
 
 # Third-party libraries
