@@ -50,10 +50,26 @@ class CaseConfig():
             'params': {
                 'out_filepath': out_filepath,
                 'nb_blocks': nb_blocks,
-                'out_file': None
+                'out_file': None # h5py File object created from out_filepath
 
             }
         }        
+
+
+    def split_hdf5_multiple(self, out_dirpath, nb_blocks=None):
+        """ Split input array into several hdf5 files.
+        Store one block per output file.
+        Each hdf5 file is called according 
+        to the index of the block in the reconstructed image.
+        """
+        self.case = {
+            'name': 'split_hdf5_multiple',
+            'params': {
+                'out_dirpath': out_dirpath,
+                'nb_blocks': nb_blocks,
+                'out_files': list()
+            }
+        }
 
 
     def split_npy(self, out_dirpath):
@@ -85,9 +101,11 @@ class CaseConfig():
             if os.path.isfile(case['params']['out_filepath']):
                 os.remove(case['params']['out_filepath'])
             case['params']['out_file'] = h5py.File(case['params']['out_filepath'], 'w')
-            return split_to_hdf5(arr, case['params']['out_file'], nb_blocks=case['params']['nb_blocks'])
+            return split_to_hdf5(arr, case['params']['out_file'], case['params']['nb_blocks'])
         elif case['name'] == 'split_npy':
             da.to_npy_stack(case['params']['out_dirpath'], arr)
+        elif case['name'] == 'split_hdf5_multiple':
+            return split_hdf5_multiple(arr, case['params']['out_files'], case['params']['nb_blocks'])
 
     
     def clean(self):
