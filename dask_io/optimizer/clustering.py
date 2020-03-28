@@ -8,9 +8,11 @@ from dask.base import tokenize
 import operator
 from operator import getitem
 
-from dask_io.utils.array_utils import get_arr_shapes
-from dask_io.utils.utils import neat_print_graph, ONE_GIG
-from dask_io.optimizer.modifiers import add_to_dict_of_lists
+from dask_io.optimizer.utils.array_utils import get_arr_shapes
+from dask_io.optimizer.utils.utils import neat_print_graph, ONE_GIG
+from dask_io.optimizer.find_proxies import add_to_dict_of_lists
+
+logger = logging.getLogger(__name__)
 
 
 def apply_clustered_strategy(graph, dicts, chunk_shape):
@@ -32,7 +34,7 @@ def get_load_strategy(
         buffer_mem_size,
         cs,
         original_array_blocks_shape,
-        nb=2):
+        nb=2): # TODO: fix this problem
     """ Get clustered writes best load strategy given the memory available for io optimization.
 
     block_row_size = block_mem_size * original_array_blocks_shape[2]
@@ -58,11 +60,11 @@ def get_load_strategy(
         raise ValueError(msg)
     max_blocks_per_load = math.floor(buffer_mem_size / block_mem_size)
 
-    logging.debug(f'Memory available: {buffer_mem_size}')
-    logging.debug(f'Chunk_shape: {cs}')
-    logging.debug(f'Block_mem_size: {block_mem_size}')
-    logging.debug(f'Strategy: {strategy}')
-    logging.debug(f'Max nb blocks per load: {max_blocks_per_load}')
+    logger.debug(f'Memory available: {buffer_mem_size}')
+    logger.debug(f'Chunk_shape: {cs}')
+    logger.debug(f'Block_mem_size: {block_mem_size}')
+    logger.debug(f'Strategy: {strategy}')
+    logger.debug(f'Max nb blocks per load: {max_blocks_per_load}')
     return strategy, max_blocks_per_load
 
 
@@ -71,10 +73,10 @@ def start_new_buffer(curr_buffer, b, prev_block, strategy, nb_blocks_per_row, ma
     """
     # test basic stuff
     if len(curr_buffer) == max_nb_blocks_per_buffer:
-        logging.debug("max nb blocks per buffer reached")
+        logger.debug("max nb blocks per buffer reached")
         return True
     if prev_block and prev_block != b - 1:
-        logging.debug("blocks non contiguous")
+        logger.debug("blocks non contiguous")
         return True 
 
     # test for bad configurations
@@ -82,7 +84,7 @@ def start_new_buffer(curr_buffer, b, prev_block, strategy, nb_blocks_per_row, ma
 
         # if it is a last element of row
         if (prev_block + 1) % nb_blocks_per_row == 0: # because 0 % k = 0
-            logging.debug(f"prev block is last element of row. nb_blocks_per_row: {nb_blocks_per_row}. (prev_block + 1): {(prev_block + 1)}")
+            logger.debug(f"prev block is last element of row. nb_blocks_per_row: {nb_blocks_per_row}. (prev_block + 1): {(prev_block + 1)}")
             # (prev_block + 1) because our block indices start at 0
             return True
 
@@ -122,11 +124,11 @@ def merge_rows(buffers, blocks_shape, nb_blocks_per_row, max_blocks_per_load):
     merged_buffers = list()
     curr_buff = list()
 
-    logging.debug(f'\nBefore first concat: {buffers}')
-    logging.debug(f'Max_blocks_per_load: {max_blocks_per_load}')
+    logger.debug(f'\nBefore first concat: {buffers}')
+    logger.debug(f'Max_blocks_per_load: {max_blocks_per_load}')
 
     for buff in buffers:
-        logging.debug(f'Treating buff {buff}')
+        logger.debug(f'Treating buff {buff}')
 
         if not is_complete_row(buff, nb_blocks_per_row):
             if len(curr_buff) != 0:  # if a pack of 1+ rows was being filled, save it and start a new one
@@ -137,25 +139,25 @@ def merge_rows(buffers, blocks_shape, nb_blocks_per_row, max_blocks_per_load):
             start_new_buffer = False 
             
             if len(curr_buff) > 0 and overlap_slice(curr_buff, buff, blocks_shape): # we dont want to overlap slices
-                logging.debug("Overlaping")
+                logger.debug("Overlaping")
                 start_new_buffer = True 
 
             if len(curr_buff) + len(buff) > max_blocks_per_load:
-                logging.debug("Nb max reached")
+                logger.debug("Nb max reached")
                 start_new_buffer = True
             
             if start_new_buffer:
-                logging.debug("Starting new buffer")
+                logger.debug("Starting new buffer")
                 if len(curr_buff) != 0: 
                     merged_buffers.append(curr_buff)
                 curr_buff = buff
             else:
                 curr_buff = curr_buff + buff
     if len(curr_buff) > 0:  # add the last one
-        logging.debug(f'Last buffer: {curr_buff}')
+        logger.debug(f'Last buffer: {curr_buff}')
         merged_buffers.append(curr_buff)
     
-    logging.debug(f'\nAfter first concat: {merged_buffers}')
+    logger.debug(f'\nAfter first concat: {merged_buffers}')
     return merged_buffers
 
 
@@ -175,11 +177,11 @@ def merge_slices(merged_buffers, nb_blocks_per_slice, max_blocks_per_load):
         else:
             return True, math.floor(buff[-1] / nb_blocks_per_slice)
 
-    logging.debug(f'\nBefore slices concat: merged_buffers')
+    logger.debug(f'\nBefore slices concat: merged_buffers')
     for buff in merged_buffers:
-        logging.debug(f'Treating: {buff}')
+        logger.debug(f'Treating: {buff}')
         is_slice, slice_index = is_complete_slice(buff, nb_blocks_per_slice)
-        logging.debug(f'Slice_index: {slice_index}')
+        logger.debug(f'Slice_index: {slice_index}')
         if not is_slice:
             merged_buffers_2.append(buff)
         else:
@@ -187,25 +189,25 @@ def merge_slices(merged_buffers, nb_blocks_per_slice, max_blocks_per_load):
             if not prev_slice_index == None:
                 if slice_index == (prev_slice_index + 1):
                     if len(curr_buff) + len(buff) <= max_blocks_per_load:
-                        logging.debug(f'len(curr_buff) + len(buff): {len(curr_buff) + len(buff)}')
-                        logging.debug(f'VS max_blocks_per_load: {max_blocks_per_load}')
+                        logger.debug(f'len(curr_buff) + len(buff): {len(curr_buff) + len(buff)}')
+                        logger.debug(f'VS max_blocks_per_load: {max_blocks_per_load}')
                         curr_buff = curr_buff + buff
                     else:
-                        logging.debug("Creating new buffer0")
+                        logger.debug("Creating new buffer0")
                         merged_buffers_2.append(curr_buff)
                         curr_buff = buff
                 else:
-                    logging.debug("Creating new buffer1")
+                    logger.debug("Creating new buffer1")
                     merged_buffers_2.append(curr_buff)
                     curr_buff = buff
             else:
-                logging.debug("Creating new buffer2")
+                logger.debug("Creating new buffer2")
                 curr_buff = buff
             prev_slice = (slice_index, buff)
     if len(curr_buff) > 0:
         merged_buffers_2.append(curr_buff)
 
-    logging.debug(f'\nAfter slices concat: {merged_buffers_2}')
+    logger.debug(f'\nAfter slices concat: {merged_buffers_2}')
     return merged_buffers_2
 
 def create_buffers(origarr_name, dicts, chunk_shape):
@@ -236,7 +238,7 @@ def create_buffers(origarr_name, dicts, chunk_shape):
     blocks_used = sorted(blocks_used)
 
     # buffering part
-    logging.debug(f'\nBefore creating buffers; blocks used are:{blocks_used}')
+    logger.debug(f'\nBefore creating buffers; blocks used are:{blocks_used}')
     buffers = buffering(blocks_used, strategy, blocks_shape, max_nb_blocks_per_buffer, True, True)
     return buffers
 
@@ -250,11 +252,11 @@ def buffering(blocks, strategy, blocks_shape, max_nb_blocks_per_buffer, row_conc
     prev_block = -1
     while len(blocks) > 0:
         b = blocks.pop(0)
-        logging.debug(f'Treating block {b}')
+        logger.debug(f'Treating block {b}')
 
         # prev_block >= 0 because remember 0 == False but we want to enter loop starting with second block (1st block index = 0)
         if prev_block >= 0 and start_new_buffer(curr_buff, b, prev_block, strategy, nb_blocks_per_row, max_nb_blocks_per_buffer):
-            logging.debug("Starting a new buffer...")
+            logger.debug("Starting a new buffer...")
             buffers.append(curr_buff.copy())
             curr_buff = list()
             prev_block = -1
@@ -270,7 +272,7 @@ def buffering(blocks, strategy, blocks_shape, max_nb_blocks_per_buffer, row_conc
     if slices_concat:
         buffers = merge_slices(buffers, nb_blocks_per_slice, max_nb_blocks_per_buffer) # 2) merge complete slices together
     
-    logging.debug(f'Final buffers scheduled:: {buffers}')
+    logger.debug(f'Final buffers scheduled:: {buffers}')
     return buffers
 
 
@@ -283,7 +285,7 @@ def get_blocks_used(dicts, origarr_name, arr_obj, chunk_shape):
     blocks_shape = dicts['origarr_to_blocks_shape'][origarr_name]
     for proxy_key in used_proxies:
         slice_tuple = dicts['proxy_to_slices'][proxy_key]
-        logging.debug(f'slice_tuple found {slice_tuple}')        
+        logger.debug(f'slice_tuple found {slice_tuple}')        
         x_range, y_range, z_range = get_covered_blocks(slice_tuple, chunk_shape) 
         for x in x_range:
             for y in y_range:
@@ -291,7 +293,7 @@ def get_blocks_used(dicts, origarr_name, arr_obj, chunk_shape):
                     if (x, y, z) not in blocks_seen:
                         blocks_seen.append((x, y, z))
                         num_pos = _3d_to_numeric_pos((x, y, z), blocks_shape, 'C')
-                        logging.debug(f'Associated {num_pos} to {(x, y, z)} using block shape: {blocks_shape}')
+                        logger.debug(f'Associated {num_pos} to {(x, y, z)} using block shape: {blocks_shape}')
                         blocks_used.append(num_pos)
                         block_to_proxies = add_to_dict_of_lists(block_to_proxies, num_pos, proxy_key, unique=True)
     return blocks_used, block_to_proxies
@@ -328,7 +330,7 @@ def create_buffer_node(
     blocks_shape = dicts['origarr_to_blocks_shape'][origarr_name]
     buffer_slices = get_buffer_slices_from_original_array(buffer, blocks_shape, chunk_shape) 
     value = (getitem, origarr_name, buffer_slices)
-    logging.debug(f'Buffer_slices found: {buffer_slices}')
+    logger.debug(f'Buffer_slices found: {buffer_slices}')
 
     # add new key/val pair to the dask graph
     if buffers_key in dask_graph.keys():

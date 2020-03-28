@@ -1,8 +1,10 @@
 import os, h5py 
 import dask.array as da
-from dask_io.utils.get_arrays import get_dask_array_from_hdf5
-from dask_io.cases.case_creation import sum_chunks_case, split_to_hdf5
+from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
+from dask_io.optimizer.cases.case_creation import sum_chunks_case, split_to_hdf5
 
+import logging
+logger = logging.getLogger(__name__)
 
 class CaseConfig():
     """ Contains the configuration for a test.
@@ -71,10 +73,11 @@ class CaseConfig():
     def get(self):
         """ Get the case to compute from the configuration.
         """
-        arr = get_dask_array_from_hdf5(self.array_filepath, '/data', to_da=True, logic_cs=self.chunks_shape)
+        arr = get_dask_array_from_hdf5(self.array_filepath, '/data', logic_cs=self.chunks_shape)
+        logger.info('CS of array loaded: %s', arr.chunks)
 
         if self.case == None:
-            print('No case defined, nothing to do.')
+            logging.warning('No case defined, nothing to do.')
             return arr
 
         case = self.case 

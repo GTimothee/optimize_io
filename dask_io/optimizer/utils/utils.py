@@ -6,12 +6,10 @@ import traceback
 
 ONE_GIG = 1000000000
 SUB_BIGBRAIN_SHAPE = (1540, 1610, 1400)
-LOG_TIME = '{date:%Y-%m-%d_%H:%M:%S}'.format(date=datetime.datetime.now())
 CHUNK_SHAPES_EXP1 = {'slabs_dask_interpol': ('auto', (1210), (1400)), 
                     'slabs_previous_exp': (7, (1210), (1400)),
                     'blocks_dask_interpol': (220, 242, 200), 
                     'blocks_previous_exp': (770, 605, 700)}
-LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../logs")
 
 
 def flush_cache():
@@ -48,3 +46,27 @@ def create_csv_file(filepath, columns, delimiter=',', mode='w+'):
         print(traceback.format_exc())
         print("An error occured while attempting to create/write csv file.")
         exit(1)
+
+
+def add_to_dict_of_lists(d, k, v, unique=False):
+    """ if key does not exist, add a new list [value], else, 
+    append value to existing list corresponding to the key
+    """
+    if k not in d:
+        if v:
+            d[k] = [v]
+        else:
+            d[k] = list()
+    else:
+        if v and (unique and v not in d[k]) or not unique:
+            d[k].append(v)
+    return d
+
+
+def flatten_iterable(l, plain_list=list()):
+    for e in l:
+        if isinstance(e, list) and not isinstance(e, (str, bytes)):
+            plain_list = flatten_iterable(e, plain_list)
+        else:
+            plain_list.append(e)
+    return plain_list

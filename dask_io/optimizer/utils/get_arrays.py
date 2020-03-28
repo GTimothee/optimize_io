@@ -1,11 +1,63 @@
+import atexit
 import dask
 import dask.array as da
 import os
 import h5py
-from dask_io.utils.array_utils import inspect_h5py_file
+from dask_io.optimizer.utils.array_utils import inspect_h5py_file
+
+import logging
+logger = logging.getLogger(__name__)
+
+SOURCE_FILES = list() # opened files to be closed after processing 
 
 
-def get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto"):
+@atexit.register
+def clean_files():
+    """ Clean the global list of opened files that are being used to create dask arrays. 
+    """
+    for f in SOURCE_FILES:
+        f.close()
+
+
+def file_in_list(file_pointer, file_list):
+    """ Check if a file pointer points to the same file than another file pointer in the file_list.
+    """
+    for fp in file_list:
+        if file_pointer == fp:
+            return True 
+
+    return False
+
+
+def get_dataset(file_path, dataset_key):
+    """ Get dataset from hdf5 file 
+    """
+
+    def check_extension(file_path, ext):
+        if file_path.split('.')[-1] != ext:
+            return False 
+        return True
+
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError()
+
+    if not check_extension(file_path, 'hdf5'):
+        raise ValueError("This is not a hdf5 file.") 
+
+    f = h5py.File(file_path, 'r')
+
+    if not f.keys():
+        raise ValueError('No dataset found in the input file. Aborting.')
+
+    if not file_in_list(f, SOURCE_FILES):
+        SOURCE_FILES.append(f)
+
+    inspect_h5py_file(f)
+
+    return f[dataset_key]
+
+
+def get_dask_array_from_hdf5(file_path, dataset_key, logic_cs="auto"):
     """ Extract a dask array from a hdf5 file using the dataset key.
     Dataset key: key of the dataset inside the hdf5 file.
 
@@ -27,51 +79,21 @@ def get_dask_array_from_hdf5(file_path, dataset_key, to_da=True, logic_cs="auto"
         dask array 
     """
 
-    def check_extension(file_path, ext):
-        if file_path.split('.')[-1] != ext:
-            return False 
-        return True
-
-    def physically_chunked():
+    def physically_chunked(dataset):
         if dataset.chunks:
             return True 
         return False
 
-    if not os.path.isfile(file_path):
-        raise FileNotFoundError()
-
-    if not check_extension(file_path, 'hdf5'):
-        raise ValueError("This is not a hdf5 file.") 
-
-    f = h5py.File(file_path, 'r')
-
-    """
-    >> with h5py.File(file_path, 'r') as f:
-    
-    cannot do the above because it closes the file after 
-    the context but the array has not yet been computed
-    therefore the computation graph contains a "<Closed HDF5 dataset>" 
-
-    TODO: The file is not closed however.
-    """
-
-    if not f.keys():
-        raise ValueError('No dataset found in the input file. Aborting.')
-
-    if not to_da:
-        return f[dataset_key]
-
-    inspect_h5py_file(f)
-
-    dataset = f[dataset_key]
+    dataset = get_dataset(file_path, dataset_key)
 
     if logic_cs == "physical":
-        if physically_chunked():  
+        if physically_chunked(dataset):  
             logic_cs = dataset.chunks
         else:
             print("logic_cs set to `physical` but dataset not physically chunked. Using `auto` as logic_cs.")
             logic_cs = "auto"
     
+    logger.info("Creating dask array from file using chunk shape: %s", logic_cs)
     return da.from_array(dataset, chunks=logic_cs)
 
 
