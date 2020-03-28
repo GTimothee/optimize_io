@@ -2,12 +2,14 @@ import os
 import pytest
 
 from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5, get_dataset
+from dask_io.optimizer.configure import disable_clustering
 
 from ..utils import create_test_array_nochunk
 
 
 @pytest.fixture
 def test_array_path():
+    disable_clustering()
     array_filepath = './small_array_nochunk.hdf5'
     if not os.path.isfile(array_filepath):
         create_test_array_nochunk(array_filepath, (100, 100, 100))

@@ -1,3 +1,5 @@
+import os
+import h5py
 import logging
 import dask.array as da
 
@@ -47,7 +49,7 @@ def get_arr_chunks(arr, nb_chunks=None, as_dict=False):
                         positions.append((i,j,k))
 
     if as_dict:
-        return zip(positions, arr_list)
+        return dict(zip(positions, arr_list))
     else:
         return arr_list
 
@@ -93,7 +95,7 @@ def split_to_hdf5(arr, f, nb_blocks):
     return da.store(arr_list, datasets, compute=False)
 
 
-def split_hdf5_multiple(arr, file_list, nb_blocks):
+def split_hdf5_multiple(arr, out_dirpath, nb_blocks, file_list):
     """
     Arguments:
     ----------
@@ -106,11 +108,12 @@ def split_hdf5_multiple(arr, file_list, nb_blocks):
     datasets = list()
     arr_list = list()
     for k, arr_block in arr_dict.items():
+        i, j, k = k
         filename = f'{i}_{j}_{k}.hdf5'
         filepath = os.path.join(out_dirpath, filename)
-        if os.path.isfile(case['params']['out_filepath']):
-                os.remove(case['params']['out_filepath'])
-        file_list.append(h5py.File(out_filepath, 'w'))
+        if os.path.isfile(filepath):
+                os.remove(filepath)
+        file_list.append(h5py.File(filepath, 'w'))
 
         datasets.append(file_list[-1].create_dataset('/data', shape=arr_block.shape))
         arr_list.append(arr_block)

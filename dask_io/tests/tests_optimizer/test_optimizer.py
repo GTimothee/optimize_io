@@ -17,6 +17,7 @@ from dask_io.optimizer.cases.case_creation import get_arr_chunks
 from dask_io.optimizer.configure import enable_clustering, disable_clustering
 from dask_io.optimizer.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
 from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
+from dask_io.optimizer.utils.array_utils import inspect_h5py_file
 
 from ..utils import create_test_array_nochunk, ONE_GIG
 
@@ -149,5 +150,16 @@ def test_split(optimized, nb_chunks, shape_to_test):
     store_correct()
 
 
-def test_split_multiple():
-    pass
+def test_split_multiple(shape_to_test, nb_chunks):
+    out_dirpath = './'
+    case = CaseConfig(pytest.test_array_path, shape_to_test)
+    case.split_hdf5_multiple(out_dirpath, nb_blocks=None)
+    case.get().compute()
+    case.clean()
+
+    import glob, os
+    os.chdir(out_dirpath)
+    for filepath in glob.glob("*.hdf5"):
+        logger.info("Inspecting filepath: %s", filepath)
+        with h5py.File(filepath, 'r') as f:
+            inspect_h5py_file(f)

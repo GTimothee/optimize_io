@@ -1,7 +1,7 @@
 import os, h5py 
 import dask.array as da
 from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
-from dask_io.optimizer.cases.case_creation import sum_chunks_case, split_to_hdf5
+from dask_io.optimizer.cases.case_creation import sum_chunks_case, split_to_hdf5, split_hdf5_multiple
 
 import logging
 logger = logging.getLogger(__name__)
@@ -96,24 +96,42 @@ class CaseConfig():
 
         case = self.case 
         if case['name'] == 'sum':
-            return sum_chunks_case(arr, case['params']['nb_chunks'], compute=False)
+            return sum_chunks_case(arr, 
+                                   case['params']['nb_chunks'], 
+                                   compute=False)
+
         elif case['name'] == 'split_hdf5':
             if os.path.isfile(case['params']['out_filepath']):
                 os.remove(case['params']['out_filepath'])
             case['params']['out_file'] = h5py.File(case['params']['out_filepath'], 'w')
-            return split_to_hdf5(arr, case['params']['out_file'], case['params']['nb_blocks'])
+            return split_to_hdf5(arr, 
+                                 case['params']['out_file'], 
+                                 case['params']['nb_blocks'])
+
         elif case['name'] == 'split_npy':
             da.to_npy_stack(case['params']['out_dirpath'], arr)
+
         elif case['name'] == 'split_hdf5_multiple':
-            return split_hdf5_multiple(arr, case['params']['out_files'], case['params']['nb_blocks'])
+            return split_hdf5_multiple(arr, 
+                                       case['params']['out_dirpath'], 
+                                       case['params']['nb_blocks'], 
+                                       case['params']['out_files'])
 
     
     def clean(self):
         name = self.case['name']
-        if name and name != 'sum':
-            try:
-                f = self.case['params']['out_file']
-                if f:
-                    f.close()
-            except:
-                pass
+        if name:
+            if name == 'split_hdf5' or name == 'split_npy':
+                try:
+                    f = self.case['params']['out_file']
+                    if f:
+                        f.close()
+                except:
+                    pass
+            elif name == 'split_hdf5_multiple':
+                for f in self.case['params']['out_files']:
+                    try:
+                        if f:
+                            f.close()
+                    except:
+                        pass
