@@ -1,5 +1,6 @@
 # DASK IO
 [![Build Status](https://travis-ci.com/GTimothee/dask_io.svg?branch=tests)](https://travis-ci.com/GTimothee/dask_io)
+
 A module optimizing the task graph in Dask's threaded scheduler in order to faster I/O operations.
 
 # Third-party libraries
@@ -19,9 +20,10 @@ pip install -r requirements.txt
 ## Note for developers
 To create the requirements_conda file:
 ```
-conda list -e > requirements.txt
+conda list -e > requirements_conda.txt
 ``` 
-To create the requirements.txt file from conda environment:
+To create the ``requirements.txt" file from conda environment:
 ```
 pip freeze > requirements.txt
 ``` 
+Remove mkl dependencies from ``requirements.txt" to get rid of compatibility issues.
