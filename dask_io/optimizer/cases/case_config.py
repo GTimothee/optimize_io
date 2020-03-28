@@ -1,8 +1,10 @@
 import os, h5py 
 import dask.array as da
-from dask_io.utils.get_arrays import get_dask_array_from_hdf5
-from dask_io.cases.case_creation import sum_chunks_case, split_to_hdf5
+from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
+from dask_io.optimizer.cases.case_creation import sum_chunks_case, split_to_hdf5
 
+import logging
+logger = logging.getLogger(__name__)
 
 class CaseConfig():
     """ Contains the configuration for a test.
@@ -43,9 +45,7 @@ class CaseConfig():
         ----------
             nb_blocks: nb_blocks to extract from the original array
         """
-
-        if os.path.isfile(out_filepath):
-            os.remove(out_filepath)
+        self.out_filepath = out_filepath
 
         self.case = {
             'name': 'split_hdf5',
@@ -73,17 +73,19 @@ class CaseConfig():
     def get(self):
         """ Get the case to compute from the configuration.
         """
+        arr = get_dask_array_from_hdf5(self.array_filepath, '/data', logic_cs=self.chunks_shape)
+        logger.info('CS of array loaded: %s', arr.chunks)
 
-        if not self.case:
-            print('No case defined, nothing to do.')
-            return 
-        
-        arr = get_dask_array_from_hdf5(self.array_filepath, '/data', to_da=True, logic_cs=self.chunks_shape)
+        if self.case == None:
+            logging.warning('No case defined, nothing to do.')
+            return arr
 
         case = self.case 
         if case['name'] == 'sum':
             return sum_chunks_case(arr, case['params']['nb_chunks'], compute=False)
         elif case['name'] == 'split_hdf5':
+            if os.path.isfile(self.out_filepath):
+                os.remove(self.out_filepath)
             case['params']['out_file'] = h5py.File(case['params']['out_filepath'], 'w')
             return split_to_hdf5(arr, case['params']['out_file'], nb_blocks=case['params']['nb_blocks'])
         elif case['name'] == 'split_npy':

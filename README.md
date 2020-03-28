@@ -1,17 +1,30 @@
-# dask_io
+# DASK IO
+[![Build Status](https://travis-ci.com/GTimothee/dask_io.svg?branch=tests)](https://travis-ci.com/GTimothee/dask_io)
+[![Coverage Status](https://coveralls.io/repos/github/GTimothee/dask_io/badge.svg?branch=tests)](https://coveralls.io/github/GTimothee/dask_io?branch=tests)
+
 A module optimizing the task graph in Dask's threaded scheduler in order to faster I/O operations.
 
+# Third-party libraries
+Use requirements.txt or requirements_conda.txt to install the dependencies.
 
-## setup
-add custom_setup.py at `dask_io.tests.custom_setup.py` containing:
-
+For a conda environment:
 ```
-import os, sys
-
-def setup_custon_dask():
-    custom_dask_path = 
-    sys.path.insert(0, custom_dask_path)
+conda create --name <env> --file requirements_conda.txt
+```
+For a pip environment: 
+```
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
 ```
 
-+ add a symbolic link/or direct folder called 'data' to data folder for the tests
-+ create logs folder in dask_io/dask_io
+## Note for developers
+To create the requirements_conda file:
+```
+conda list -e > requirements_conda.txt
+``` 
+To create the ``requirements.txt" file from conda environment:
+```
+pip freeze > requirements.txt
+``` 
+Remove mkl dependencies from ``requirements.txt" to get rid of compatibility issues.
