@@ -56,7 +56,7 @@ def optimized(request):
     return request.param 
 
 
-def sum_tester(shape_to_test, nb_chunks):
+def test_sum(shape_to_test, nb_chunks):
     """ Test if the sum of two blocks yields the good result using our optimization function.
     """
     logger.info("testing shape %s", shape_to_test)
