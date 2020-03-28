@@ -101,12 +101,17 @@ def split_hdf5_multiple(arr, file_list, nb_blocks):
         file_list: Empty list to store output files' objects.
         nb_blocks: Nb blocks we want to extract. None = all blocks.
     """
-    # create output files
+    arr_dict = get_arr_chunks(arr, nb_blocks, as_dict=True) # get array blocks as dask array objects
 
-    # get array blocks
-    arr_list = get_arr_chunks(arr, nb_blocks)
+    datasets = list()
+    arr_list = list()
+    for k, arr_block in arr_dict.items():
+        filename = f'{i}_{j}_{k}.hdf5'
+        filepath = os.path.join(out_dirpath, filename)
+        if os.path.isfile(case['params']['out_filepath']):
+                os.remove(case['params']['out_filepath'])
+        file_list.append(h5py.File(out_filepath, 'w'))
 
-    # for each out file
-        # create dataset wth key = key of block
-
+        datasets.append(file_list[-1].create_dataset('/data', shape=arr_block.shape))
+        arr_list.append(arr_block)
     return da.store(arr_list, datasets, compute=False)

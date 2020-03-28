@@ -147,3 +147,7 @@ def test_split(optimized, nb_chunks, shape_to_test):
     # assert
     arr_list = create_arrays_for_comparison()
     store_correct()
+
+
+def test_split_multiple():
+    pass
