@@ -30,7 +30,7 @@ def clustered_optimization(graph):
 
     if chunk_shape == None or dicts == None:
         logger.error("Chunk shape or dicts = None. Aborting dask_io optimization.")
-        return graph
+        raise ValueError()
 
     logger.info("Launching optimization algorithm.") 
     apply_clustered_strategy(graph, dicts, chunk_shape)

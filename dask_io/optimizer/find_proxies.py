@@ -216,6 +216,27 @@ def get_root_nodes(remade_graph):
     return root_nodes
 
 
+def get_chunk_shape(proxy_to_slices, origarr_to_obj, origarr_to_blocks_shape):
+    first_key = list(proxy_to_slices.keys())[0]
+    sample_slices = proxy_to_slices[first_key]   
+    chunk_shape = list()
+    for s in sample_slices:
+        start = s.start
+        stop = s.stop
+        chunk_shape.append(stop - start)
+    chunk_shape = tuple(chunk_shape)
+
+    # create the new dictionary (to be replaced)
+    origarr_to_blocks_shape = dict()
+    for key, obj in origarr_to_obj.items():
+        logger.debug("Supposed to be original array: %s -> %s", key, obj)
+        blocks_dims = get_array_block_dims(obj.shape, chunk_shape)
+        logger.debug('Found following block dimensions: %s', blocks_dims)
+        origarr_to_blocks_shape[key] = blocks_dims 
+
+    return chunk_shape, origarr_to_blocks_shape
+
+
 def get_used_proxies(graph):
     """ Find the proxies that are used by other tasks in the task graph.
     We call ``proxy" a task that uses ``getitem" directly on the ``original-array".
@@ -242,39 +263,20 @@ def get_used_proxies(graph):
         all_nodes.append(nodes_used_list)
 
     search_dask_graph(graph, all_nodes,
-    proxy_to_slices,
-    origarr_to_used_proxies,
-    origarr_to_obj,
-    origarr_to_blocks_shape,
-    proxy_to_dict,
-    unused_keys)
-  
-    # find chunk shape (to be replaced)
-    #-------------------------------------------------------------
+                      proxy_to_slices,
+                      origarr_to_used_proxies,
+                      origarr_to_obj,
+                      origarr_to_blocks_shape,
+                      proxy_to_dict,
+                      unused_keys)
     
     if not len(list(proxy_to_slices.keys())) > 0:
         return None, None
-
-    first_key = list(proxy_to_slices.keys())[0]
-    sample_slices = proxy_to_slices[first_key]
-    logger.info("proxytoslices first_key %s: %s", first_key, sample_slices)    
-    chunk_shape = list()
-    for s in sample_slices:
-        start = s.start
-        stop = s.stop
-        chunk_shape.append(stop - start)
-    chunk_shape = tuple(chunk_shape)
-
-    # create the new dictionary (to be replaced)
-    origarr_to_blocks_shape = dict()
-    for key, obj in origarr_to_obj.items():
-        logger.info("supposed to be original array: %s -> %s", key, obj)
-        blocks_dims = get_array_block_dims(obj.shape, chunk_shape)
-        logger.debug('Found following block dimensions: %s', blocks_dims)
-        origarr_to_blocks_shape[key] = blocks_dims 
-        # warning on above line: 
-        # if more than one original array and different chunk shapes it will not work
-    #-------------------------------------------------------------
+    else:
+        chunk_shape, origarr_to_blocks_shape = get_chunk_shape(
+            proxy_to_slices, 
+            origarr_to_obj, 
+            origarr_to_blocks_shape)
 
     return chunk_shape, {
         'proxy_to_slices': proxy_to_slices, 
