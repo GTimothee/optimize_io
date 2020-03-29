@@ -3,6 +3,7 @@ import h5py
 import logging
 import dask.array as da
 
+from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
 from dask_io.optimizer.utils.array_utils import get_arr_shapes, get_arr_shapes
 from dask_io.optimizer.utils.utils import add_to_dict_of_lists
 
@@ -135,13 +136,23 @@ def merge_hdf5_multiple(input_dirpath, out_filepath, out_file, dataset_key):
     workdir = os.getcwd()
     os.chdir(input_dirpath)
     data = dict()
-    for infilepath in glob.glob("*.hdf5"):
-        pos = infilepath.split('_')[:-1]
+    for infilepath in glob.glob("[0-9]_[0-9]_[0-9].hdf5"):
+        pos = infilepath.split('_')
+        pos[-1] = pos[-1].split('.')[0]
+        pos = tuple(list(map(lambda s: int(s), pos)))
         arr = get_dask_array_from_hdf5(infilepath, 
                                        dataset_key, 
                                        logic_cs="dataset_shape")
         data[pos] = arr
     os.chdir(workdir)
+
+    if len(data.keys()) == 0:
+        msg = 'Could not find input file matching regex'
+        logger.error(msg)
+        raise ValueError(msg)
+
+    for pos in data.keys():
+        logger.debug('%s', pos)
 
     # create reconstructed_array
     blocks = to_list(data)
@@ -162,19 +173,35 @@ def to_list(d):
     See also:
         da.block
     """
+    def add_to_dict_of_dicts(d, dim, pair):
+        """ For each value in dimension dim we create a dictionary position: array
+        d = dict
+        dim = we sort in this dimension
+        pair = (position: block) to add to 
+        """
+        if not dim in d.keys():
+            d[dim] = dict()
+
+        k, v = pair
+        d[dim][k] = v
+
+
     if not isinstance(d, dict):
         return d
     
     keys = list()
     sorted_d = dict()
     for k, v in d.items():
+        k = list(k)
         i = k.pop(0)
         keys.append(i)
 
         if len(k) == 0: # last dimension
             sorted_d[i] = v
         else:
-            add_to_dict_of_lists(sorted_d, i, {k: v})
+            add_to_dict_of_dicts(sorted_d, i, (tuple(k), v))
 
-    max_key = keys.sort()[-1]
+    keys.sort()
+    logger.debug('keys: %s', keys)
+    max_key = keys[-1]
     return [to_list(sorted_d[i]) for i in range(max_key)]

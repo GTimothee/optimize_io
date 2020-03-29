@@ -55,10 +55,10 @@ class Merge():
 
         case = self.case 
         if case['name'] == 'merge_hdf5_multiple':
-            return merge_hdf5_multiple(case['name']['input_dirpath'], 
+            return merge_hdf5_multiple(case['params']['input_dirpath'], 
                                        self.out_filepath,
-                                       case['name']['out_file'],
-                                       case['name']['data_key'])
+                                       case['params']['out_file'],
+                                       case['params']['data_key'])
 
     def clean(self):
         name = self.case['name']

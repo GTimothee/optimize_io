@@ -14,7 +14,7 @@ with open('dask_io/config.json') as json_conffile:
 import dask
 import dask.array as da
 
-from dask_io.optimizer.cases.case_config import Split
+from dask_io.optimizer.cases.case_config import Split, Merge
 from dask_io.optimizer.cases.case_creation import get_arr_chunks
 from dask_io.optimizer.configure import enable_clustering, disable_clustering
 from dask_io.optimizer.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
@@ -167,3 +167,24 @@ def test_split_multiple(shape_to_test, nb_chunks):
         logger.info("Inspecting filepath: %s", filepath)
         with h5py.File(filepath, 'r') as f:
             inspect_h5py_file(f)
+
+
+def test_split_and_merge_multiple(): # (shape_to_test, nb_chunks):
+    """ TODO: add asserts -> retrieve chunks and compare to what have been stored.
+    """
+    shape_to_test = (20, 20, 20)
+    nb_chunks = None
+
+    out_dirpath = './'
+    case = Split(pytest.test_array_path, shape_to_test)
+    case.split_hdf5_multiple(out_dirpath, nb_blocks=None)
+    arr = case.get()
+    arr.compute()
+    case.clean()
+
+    in_dirpath = out_dirpath
+    case = Merge('./reconstructed.hdf5')
+    case.merge_hdf5_multiple(in_dirpath)
+    arr = case.get()
+    arr.compute()
+    case.clean()
