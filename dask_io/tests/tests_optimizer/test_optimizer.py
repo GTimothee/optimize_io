@@ -188,3 +188,7 @@ def test_split_and_merge_multiple(): # (shape_to_test, nb_chunks):
     arr = case.get()
     arr.compute()
     case.clean()
+
+    logger.info("Inspecting filepath: './reconstructed.hdf5'")
+    with h5py.File('./reconstructed.hdf5', 'r') as f:
+        inspect_h5py_file(f)

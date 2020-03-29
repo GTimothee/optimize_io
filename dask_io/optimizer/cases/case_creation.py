@@ -132,6 +132,16 @@ def merge_hdf5_multiple(input_dirpath, out_filepath, out_file, dataset_key):
         out_file: empty pointer. will contain file object to be free after computations by Merge object.
         dataset_key: dataset key of the block stored into each input file
     """
+    def print_blocks(l, depth):
+        tab = depth * ['\t']
+        if not isinstance(l, list):
+            logger.info(''.join(tab) + '%s', l)
+        else:
+            logger.info(''.join(tab) + '[')
+            for e in l:
+                print_blocks(e, depth+1)
+            logger.info(''.join(tab) + ']')
+
     # get array parts from input files
     workdir = os.getcwd()
     os.chdir(input_dirpath)
@@ -156,6 +166,7 @@ def merge_hdf5_multiple(input_dirpath, out_filepath, out_file, dataset_key):
 
     # create reconstructed_array
     blocks = to_list(data)
+    print_blocks(blocks, 0)
     reconstructed_array = da.block(blocks)
 
     # store new array in output file
@@ -203,5 +214,5 @@ def to_list(d):
 
     keys.sort()
     logger.debug('keys: %s', keys)
-    max_key = keys[-1]
+    max_key = keys[-1] + 1
     return [to_list(sorted_d[i]) for i in range(max_key)]
