@@ -1,13 +1,79 @@
 import os, h5py 
 import dask.array as da
 from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
-from dask_io.optimizer.cases.case_creation import sum_chunks_case, split_to_hdf5, split_hdf5_multiple
+from dask_io.optimizer.cases.case_creation import sum_chunks_case, split_to_hdf5, split_hdf5_multiple, merge_hdf5_multiple
 
 import logging
 logger = logging.getLogger(__name__)
 
-class CaseConfig():
-    """ Contains the configuration for a test.
+
+class Merge():
+    """ Object containing various merge methods.
+    It is assumed that all input files contain blocks of identical shapes.
+    """
+    def __init__(self, out_filepath):
+        """ 
+        Arguments:
+        ----------
+            out_filepath: path to the output file path
+        """
+        if not out_filepath:
+            raise ValueError('Bad arguments')
+        self.out_filepath = out_filepath
+        self.case = None
+
+
+    def merge_hdf5_multiple(self, input_dirpath, data_key='/data'):
+        """ Merge hdf5 files into one output hdf5 file.
+
+        Each input file should:
+            - store 1 block
+            - store a block of same shape than the other input files
+            - have the position of the block as filename : i_j_k.hdf5
+            - store the block using the same dataset key than the other input files
+
+        Argument: 
+        ---------
+            input_dirpath: path to directory containing input files to be merged
+            data_key: key of the dataset containing the data block
+        """
+        self.case = {
+            'name': 'merge_hdf5_multiple',
+            'params': {
+                'input_dirpath': input_dirpath,
+                'data_key': data_key,
+                'out_file': None
+            }
+        }
+
+    def get(self):
+        """ Get the case to compute from the configuration.
+        """
+        if self.case == None:
+            logging.warning('No case defined, nothing to do.')
+            return arr
+
+        case = self.case 
+        if case['name'] == 'merge_hdf5_multiple':
+            return merge_hdf5_multiple(case['name']['input_dirpath'], 
+                                       self.out_filepath,
+                                       case['name']['out_file'],
+                                       case['name']['data_key'])
+
+    def clean(self):
+        name = self.case['name']
+        if name:
+            if name == 'merge_hdf5_multiple':
+                try:
+                    f = self.case['params']['out_file']
+                    if f:
+                        f.close()
+                except:
+                    pass
+
+
+class Split():
+    """ Object containing various split methods.
     """
     def __init__(self, array_filepath, chunks_shape):
         """ 
@@ -15,11 +81,10 @@ class CaseConfig():
         ----------
             array_filepath: to load input array from file
             chunks_shape: logical chunks shape to use when loading array
-            dask_config: configuration to use
         """
 
-        if not chunks_shape:
-            raise ValueError(f'chunks_shape cannot be None.')
+        if not chunks_shape or not array_filepath:
+            raise ValueError('Bad arguments')
 
         self.array_filepath = array_filepath
         self.chunks_shape = chunks_shape

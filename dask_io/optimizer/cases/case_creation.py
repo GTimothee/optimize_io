@@ -1,9 +1,10 @@
-import os
+import glob, os
 import h5py
 import logging
 import dask.array as da
 
 from dask_io.optimizer.utils.array_utils import get_arr_shapes, get_arr_shapes
+from dask_io.optimizer.utils.utils import add_to_dict_of_lists
 
 logger = logging.getLogger(__name__)
 
@@ -118,3 +119,62 @@ def split_hdf5_multiple(arr, out_dirpath, nb_blocks, file_list):
         datasets.append(file_list[-1].create_dataset('/data', shape=arr_block.shape))
         arr_list.append(arr_block)
     return da.store(arr_list, datasets, compute=False)
+
+
+def merge_hdf5_multiple(input_dirpath, out_filepath, out_file, dataset_key):
+    """ Merge separated hdf5 files into one hdf5 output file.
+    
+    Arguments: 
+    ----------
+        input_dirpath: path to input files
+        out_filepath: path to output file
+        out_file: empty pointer. will contain file object to be free after computations by Merge object.
+        dataset_key: dataset key of the block stored into each input file
+    """
+    # get array parts from input files
+    workdir = os.getcwd()
+    os.chdir(input_dirpath)
+    data = dict()
+    for infilepath in glob.glob("*.hdf5"):
+        pos = infilepath.split('_')[:-1]
+        arr = get_dask_array_from_hdf5(infilepath, 
+                                       dataset_key, 
+                                       logic_cs="dataset_shape")
+        data[pos] = arr
+    os.chdir(workdir)
+
+    # create reconstructed_array
+    blocks = to_list(data)
+    reconstructed_array = da.block(blocks)
+
+    # store new array in output file
+    out_file = h5py.File(out_filepath, 'w')
+    dset = out_file.create_dataset('/data', shape=reconstructed_array.shape)
+    return da.store(reconstructed_array, dset, compute=False)
+
+
+def to_list(d):
+    """ Order input dictionary by the first dimension of the position. 
+    Takes a dictionary where:
+        - each key is a list representing the position of block in reconstructed array.
+        - each value is a block array (a dask array)
+    
+    See also:
+        da.block
+    """
+    if not isinstance(d, dict):
+        return d
+    
+    keys = list()
+    sorted_d = dict()
+    for k, v in d.items():
+        i = k.pop(0)
+        keys.append(i)
+
+        if len(k) == 0: # last dimension
+            sorted_d[i] = v
+        else:
+            add_to_dict_of_lists(sorted_d, i, {k: v})
+
+    max_key = keys.sort()[-1]
+    return [to_list(sorted_d[i]) for i in range(max_key)]
