@@ -23,7 +23,7 @@ class Merge():
         self.case = None
 
 
-    def merge_hdf5_multiple(self, input_dirpath, data_key='/data'):
+    def merge_hdf5_multiple(self, input_dirpath, data_key='/data', store=True):
         """ Merge hdf5 files into one output hdf5 file.
 
         Each input file should:
@@ -36,13 +36,15 @@ class Merge():
         ---------
             input_dirpath: path to directory containing input files to be merged
             data_key: key of the dataset containing the data block
+            store: if False then get() will return the reconstructed array instead of the store Delayed object
         """
         self.case = {
             'name': 'merge_hdf5_multiple',
             'params': {
                 'input_dirpath': input_dirpath,
                 'data_key': data_key,
-                'out_file': None
+                'out_file': None,
+                'store': store
             }
         }
 
@@ -58,7 +60,8 @@ class Merge():
             return merge_hdf5_multiple(case['params']['input_dirpath'], 
                                        self.out_filepath,
                                        case['params']['out_file'],
-                                       case['params']['data_key'])
+                                       case['params']['data_key'],
+                                       case['params']['store'])
 
     def clean(self):
         name = self.case['name']

@@ -122,7 +122,7 @@ def split_hdf5_multiple(arr, out_dirpath, nb_blocks, file_list):
     return da.store(arr_list, datasets, compute=False)
 
 
-def merge_hdf5_multiple(input_dirpath, out_filepath, out_file, dataset_key):
+def merge_hdf5_multiple(input_dirpath, out_filepath, out_file, dataset_key, store):
     """ Merge separated hdf5 files into one hdf5 output file.
     
     Arguments: 
@@ -168,6 +168,9 @@ def merge_hdf5_multiple(input_dirpath, out_filepath, out_file, dataset_key):
     blocks = to_list(data)
     print_blocks(blocks, 0)
     reconstructed_array = da.block(blocks)
+
+    if not store: 
+        return reconstructed_array
 
     # store new array in output file
     out_file = h5py.File(out_filepath, 'w')
