@@ -159,7 +159,7 @@ def test_split_multiple(shape_to_test, nb_chunks):
     case = Split(pytest.test_array_path, shape_to_test)
     case.split_hdf5_multiple(out_dirpath, nb_blocks=None)
     arr = case.get()
-    arr.visualize(filename='/tmp/dask_io_visualize_split_multiple.svg')
+    # arr.visualize(filename='/tmp/dask_io_visualize_split_multiple.svg')
     arr.compute()
     case.clean()
 
