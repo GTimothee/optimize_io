@@ -146,7 +146,7 @@ def merge_hdf5_multiple(input_dirpath, out_filepath, out_file, dataset_key):
     workdir = os.getcwd()
     os.chdir(input_dirpath)
     data = dict()
-    for infilepath in glob.glob("[0-9]_[0-9]_[0-9].hdf5"):
+    for infilepath in glob.glob("[0-9]*_[0-9]*_[0-9]*.hdf5"):
         pos = infilepath.split('_')
         pos[-1] = pos[-1].split('.')[0]
         pos = tuple(list(map(lambda s: int(s), pos)))

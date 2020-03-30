@@ -169,11 +169,16 @@ def test_split_multiple(shape_to_test, nb_chunks):
             inspect_h5py_file(f)
 
 
-def test_split_and_merge_multiple(): # (shape_to_test, nb_chunks):
+def test_split_and_merge_multiple(shape_to_test, nb_chunks): 
     """ TODO: add asserts -> retrieve chunks and compare to what have been stored.
     """
-    shape_to_test = (20, 20, 20)
-    nb_chunks = None
+    fileslist = list()
+    for infilepath in glob.glob("[0-9]*_[0-9]*_[0-9]*.hdf5"):  # remove split files from previous tests
+        fileslist.append(infilepath)
+    fileslist.append('./reconstructed.hdf5')
+    for fn in fileslist: 
+        if os.path.isfile(fn):
+            os.remove(fn)
 
     out_dirpath = './'
     case = Split(pytest.test_array_path, shape_to_test)
@@ -192,3 +197,4 @@ def test_split_and_merge_multiple(): # (shape_to_test, nb_chunks):
     logger.info("Inspecting filepath: './reconstructed.hdf5'")
     with h5py.File('./reconstructed.hdf5', 'r') as f:
         inspect_h5py_file(f)
+        assert f['/data'].shape == (100,100,100)
