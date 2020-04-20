@@ -182,6 +182,7 @@ def compute_zones(B, O, R):
         
     arrays_dict = get_array_dict(buff_to_vols, R, O)
     merge_cached_volumes(arrays_dict)
+    clean_arrays_dict(arrays_dict)
 
     regions_dict = deepcopy(array_dict)
     offsets = get_offsets()

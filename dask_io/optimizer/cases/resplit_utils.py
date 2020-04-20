@@ -6,8 +6,6 @@ class Axes(Enum):
 
 class Volume:
     def __init__(self, index, p1, p2):
-        if not isinstance(index, int):
-            raise TypeError()
         if not isinstance(p1, tuple) \ 
             or not isinstance(p2, tuple):
             raise TypeError()
@@ -79,13 +77,49 @@ def get_crossed_outfiles(buffer_index, buffers, outfiles):
     return crossing
 
 
-def merge_volumes():
-    pass
+def merge_volumes(volume1, volume2):
+    """ Merge two volumes into one.
+    """
+    if not isinstance(volume1, Volume) or \
+        not isinstance(volume2, Volume):
+        raise TypeError()
+
+    lowercorner1, uppercorner1 = volume1
+    lowercorner2, uppercorner2 = volume2
+    lowercorner = (min(lowercorner1[0], lowercorner2[0]), 
+                   min(lowercorner1[1], lowercorner2[1]),
+                   min(lowercorner1[2], lowercorner2[2]))
+    uppercorner = (max(uppercorner1[0], uppercorner2[0]), 
+                   max(uppercorner1[1], uppercorner2[1]),
+                   max(uppercorner1[2], uppercorner2[2]))
+    return Volume(None, lowercorner, uppercorner)
 
 
 def included_in(volume, outfile):
-    pass
+    """ Alias of hypercubes_overlap. 
+    We do not verify that it is included but by definition
+    of the problem if volume crosses outfile then volume in outfile.
+
+    Arguments: 
+    ----------
+        volume: Volume in buffer
+        outfile: Volume representing an output file
+    """
+    return hypercubes_overlap(volume, outfile)
 
 
 def add_to_array_dict(array_dict, outfile, volume):
-    pass
+    """ Add volume information to dictionary associating output file index to 
+    """
+    if not isinstance(outfile.index, int) or \ 
+        not isinstance(volume, Volume) or \ 
+        not isinstance(outfile, Volume):
+        raise TypeError()
+
+    if not outfile.index in array_dict.keys():
+        array_dict[outfile.index] = list()
+    array_dict[outfile.index].append(volume)
+
+
+def clean_arrays_dict(arrays_dict):
+    
