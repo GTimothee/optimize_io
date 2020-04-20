@@ -3,8 +3,8 @@ from dask_io.optimizer.cases.resplit_utils import *
 
 
 class Axes(Enum):
-    i: 0,
-    j: 1,
+    i: 0
+    j: 1
     k: 2
 
 
@@ -125,7 +125,7 @@ def compute_hidden_volumes(T, O, volumes):
         blc_index[Axis.i] += 1
         trc_index[Axis.i] += 1
 
-return volumes
+    return volumes
 
 
 def add_offsets(volumes):
