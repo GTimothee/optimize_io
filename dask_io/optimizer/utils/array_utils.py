@@ -45,15 +45,15 @@ def get_arr_shapes(arr, dtype=False):
 
 
 def inspect_h5py_file(f):
-    logger.debug(f'Inspecting h5py file...')
+    print(f'Inspecting h5py file...')
     for k, v in f.items():
-        logger.debug(f'\tFound object {v.name} at key {k}')
+        print(f'\tFound object {v.name} at key {k}')
         if isinstance(v, Dataset):
-            logger.debug(f'\t - Object type: dataset')
-            logger.debug(f'\t - Physical chunks shape: {v.chunks}')
-            logger.debug(f'\t - Compression: {v.compression}')
-            logger.debug(f'\t - Shape: {v.shape}')
-            logger.debug(f'\t - Size: {v.size}')
-            logger.debug(f'\t - Dtype: {v.dtype}')
+            print(f'\t - Object type: dataset')
+            print(f'\t - Physical chunks shape: {v.chunks}')
+            print(f'\t - Compression: {v.compression}')
+            print(f'\t - Shape: {v.shape}')
+            print(f'\t - Size: {v.size}')
+            print(f'\t - Dtype: {v.dtype}')
         else:
-            logger.debug(f'\t - Object type: group')
+            print(f'\t - Object type: group')
