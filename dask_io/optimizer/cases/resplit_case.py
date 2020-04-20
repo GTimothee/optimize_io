@@ -4,40 +4,6 @@ from dask_io.optimizer.utils.utils import numeric_to_3d_pos, _3d_to_numeric_pos
 from dask_io.optimizer.cases.resplit_utils import *
 
 
-class Axes(Enum):
-    i: 0
-    j: 1
-    k: 2
-
-
-class Volume:
-    def __init__(self, index, p1, p2):
-        if not isinstance(index, int):
-            raise TypeError()
-        if not isinstance(p1, tuple) \ 
-            or not isinstance(p2, tuple):
-            raise TypeError()
-
-        self.index = index
-        self.p1 = p1
-        self.p2 = p2
-
-    def add_offset(self, offset):
-        """
-        offset: a tuple
-        """
-        self.p1 = self._add_offset(self.p1, offset)
-        self.p2 = self._add_offset(self.p2, offset)
-            
-
-    def _add_offset(self, p, offset):
-        if isinstance(offset, list):
-            offset = tuple(offset)
-        elif not isinstance(offset, tuple):
-            raise TypeError("Expected tuple")
-        return tuple(map(operator.add, p, offset))
-
-
 def get_main_volumes(B, T):
     """ I- Get a dictionary associating volume indices to volume positions in the buffer.
     Indexing following the keep algorithm indexing in storage order.
@@ -157,13 +123,13 @@ def add_offsets(volumes_list, _3d_index, B):
         volume.add_offset(offset)
 
 
-def get_array_dict(buff_to_vols):
+def get_array_dict(buff_to_vols, R, O):
     """ IV - Assigner les volumes à tous les output files, en gardant référence du type de volume que c'est
     """
     array_dict = dict()
 
     for buffer_index, buffer_volumes in buff_to_vols.items():
-        crossed_outfiles = get_crossed_outfiles(buffer_index, outfiles) # refine search
+        crossed_outfiles = get_crossed_outfiles(buffer_index, R, O) # refine search
 
         for volume in buffer_volumes:
             for outfile in crossed_outfiles:
@@ -186,19 +152,24 @@ def merge_cached_volumes(arrays_dict):
     return
 
 
-def compute_zones(B, O, blocks_shape):
+def compute_zones(B, O, R):
     """ Main function of the module. Compute the "arrays" and "regions" dictionary for the resplit case.
 
     Arguments:
     ----------
         B: buffer shape
         O: output file shape
-        blocks_shape: shape of reconstructed image in terms of buffers (nb buffers in each dimension)
+        R: shape of reconstructed image
     """
     buff_to_vols = dict()
+    buffers_shape = get_blocks_shape(R, B)
+
+    # get buffers' corners
+    # get outfiles' corners
+    outfiles_shape = get_blocks_shape(R, O)
 
     for buffer_index in range(nb_buffers):
-        _3d_index = numeric_to_3d_pos(buffer_index, blocks_shape, order='C') # to replace by order F, TODO refactor func
+        _3d_index = numeric_to_3d_pos(buffer_index, buffers_shape, order='C') # to replace by order F, TODO refactor func
         T = list()
         for i in range(3):
             C = (_3d_index[i] * B[i]) % O[i]
@@ -209,7 +180,7 @@ def compute_zones(B, O, blocks_shape):
         volumes_list = volumes_list + hidden_volumes
         buff_to_vols[buffer_index] = add_offsets(volumes_list, _3d_index, B)
         
-    arrays_dict = get_array_dict(buff_to_vols)
+    arrays_dict = get_array_dict(buff_to_vols, R, O)
     merge_cached_volumes(arrays_dict)
 
     regions_dict = deepcopy(array_dict)
