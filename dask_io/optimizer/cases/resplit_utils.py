@@ -121,5 +121,15 @@ def add_to_array_dict(array_dict, outfile, volume):
     array_dict[outfile.index].append(volume)
 
 
+def convert_Volume_to_slices(v):
+    if not isinstance(v, Volume):
+        raise TypeError()
+    p1, p2 = v.get_corners()
+    return [slice(p1[dim], p2[dim], None) for dim in range(len(p1))]
+
+
 def clean_arrays_dict(arrays_dict):
-    
+    for k in arrays_dict.keys():
+        v = arrays_dict[k]
+        slices = convert_Volume_to_slices(v)
+        arrays_dict(k) = v
