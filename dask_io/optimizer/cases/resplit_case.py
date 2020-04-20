@@ -1,4 +1,6 @@
 from enum import Enum
+from dask_io.optimizer.cases.resplit_utils import *
+
 
 class Axes(Enum):
     i: 0,
@@ -47,7 +49,7 @@ def get_main_volumes(B, T):
                (T[Axes.i], B[Axes.j], B[Axes.k]))]
 
 
-def compute_hidden_volumes(T, O):
+def compute_hidden_volumes(T, O, volumes):
     """ II- compute hidden output files' positions (in F0)
 
     Hidden volumes are output files inside the f0 volume (see paper).
@@ -59,6 +61,7 @@ def compute_hidden_volumes(T, O):
     ----------
         T: Theta shape for the buffer being treated (see paper)
         O: output file shape
+        volumes: list of volumes
     """
     # a) get volumes' graduation on x, y, z axes
     # i.e. find the crosses in the 2D example drawing below:
@@ -72,7 +75,7 @@ def compute_hidden_volumes(T, O):
     # |   hidden   |f2|      |  |
     # x------------|  |      |  ▼
     # |   hidden   |  |      | ← Theta[k]
-    # x------------x--| → j  ▼   
+    # x------------x--- → j  ▼   
 
     points = list()
     for dim in range(3):
@@ -104,7 +107,7 @@ def compute_hidden_volumes(T, O):
     # |   hidden   |f2|      |  |
     # blc2------trc1  |      |  ▼
     # |   hidden   |  |      | ← Theta[k]
-    # blc1-------------
+    # blc1-------------      ▼
 
     index = 7 # key of the volume in the dictionary of volumes, [1 -> 7 included] already taken
     for i in range(len(points[0])-1):
@@ -122,27 +125,33 @@ def compute_hidden_volumes(T, O):
         blc_index[Axis.i] += 1
         trc_index[Axis.i] += 1
 
+return volumes
 
-def add_offsets(volumes, buffer_offset):
+
+def add_offsets(volumes):
     """ III - Add offset to volumes positions to get positions in the reconstructed image.
     """
+    return volumes
 
-def get_array_dict():
+
+def get_array_dict(buff_to_vols):
     """ IV - Assigner les volumes à tous les output files, en gardant référence du type de volume que c'est
     """
     array_dict = dict()
-    alloutfiles = list(range(nb_outfiles))
-    for buffer_index in buffers:
-        crossed_outfiles = get_crossed_outfiles(O, buffer_index)
-        buffervolumes = volumes_dictionary[buffer_index]
-        for volume in buffervolumes:
+
+    for buffer_index, buffer_volumes in buff_to_vols.items():
+        crossed_outfiles = get_crossed_outfiles(buffer_index, outfiles) # refine search
+
+        for volume in buffer_volumes:
             for outfile in crossed_outfiles:
-                if included_in(outfile, volume):
-                    add_to_array_dict(outfile, volume)
+                if included_in(volume, outfile):
+                    add_to_array_dict(array_dict, outfile, volume)
                     break # a volume can belong to only one output file
 
+    return array_dict
 
-def merge_cached_volumes():
+
+def merge_cached_volumes(arrays_dict):
     """ V - Pour chaque output file, pour chaque volume, si le volume doit être kept alors fusionner
     """
     for outfileindex in array_dict.keys():
@@ -151,17 +160,18 @@ def merge_cached_volumes():
             if volume.index in volumestokeep:
                 merge_volumes(volumes, volume.index)
         array_dict[outfileindex] = map_to_slices(volumes)
+    return
 
 
 def compute_zones(B, O):
-    """ Calcule les zones pour le dictionnaire "array"
+    """ Main function of the module. Compute the "arrays" and "regions" dictionary for the resplit case.
 
     Arguments:
     ----------
         B: buffer shape
         O: output file shape
     """
-    volumes_dictionary = dict()
+    buff_to_vols = dict()
 
     for buffer_index in range(nb_buffers):
         _3d_index = get3dpos(buffer_index)
@@ -170,13 +180,18 @@ def compute_zones(B, O):
             C = (_3d_index[i] * B[i]) % O[i]
             T.append(B[i] - C)
 
-        volumes = get_main_volumes()
-        hidden_volumes = compute_hidden_volumes(volumes)
+        volumes = get_main_volumes(B, T)
+        hidden_volumes = compute_hidden_volumes(T, O, volumes)
         volumes.extends(hidden_volumes)
-        add_offsets(volumes, buffer_offset)
-        volumes_dictionary[buffer_index] = volumes
 
-    array_dict = get_array_dict()
+        add_offsets(volumes)
+        buff_to_vols[buffer_index] = volumes
+        
+    arrays_dict = get_array_dict(buff_to_vols)
+    merge_cached_volumes(arrays_dict)
+
     regions_dict = deepcopy(array_dict)
     offsets = get_offsets()
     regions_dict = remove_offset(regions_dict, offsets)
+
+    return arrays_dict, regions_dict
