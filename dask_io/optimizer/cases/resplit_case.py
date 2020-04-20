@@ -1,4 +1,5 @@
 from enum import Enum
+from dask_io.optimizer.utils.utils import numeric_to_3d_pos, _3d_to_numeric_pos
 from dask_io.optimizer.cases.resplit_utils import *
 
 
@@ -13,6 +14,13 @@ class Volume:
         self.index = index
         self.p1 = p1
         self.p2 = p2
+
+    def add_offset(self, offset):
+        for p in [self.p1, self.p2]:
+            p_list = list(p)
+            for dim in range(len(offset)):
+                p_list[dim] += offset[dim]
+            p = tuple(p_list)
 
 
 def get_main_volumes(B, T):
@@ -128,9 +136,12 @@ def compute_hidden_volumes(T, O, volumes):
 return volumes
 
 
-def add_offsets(volumes):
+def add_offsets(volumes_dict, _3d_index, B):
     """ III - Add offset to volumes positions to get positions in the reconstructed image.
     """
+    offset = [B[dim] * _3d_index[dim] for dim in len(_3d_index)]
+    for volume in volumes_dict.values():
+        volume.add_offset(offset)
     return volumes
 
 
@@ -163,29 +174,28 @@ def merge_cached_volumes(arrays_dict):
     return
 
 
-def compute_zones(B, O):
+def compute_zones(B, O, blocks_shape):
     """ Main function of the module. Compute the "arrays" and "regions" dictionary for the resplit case.
 
     Arguments:
     ----------
         B: buffer shape
         O: output file shape
+        blocks_shape: shape of reconstructed image in terms of buffers (nb buffers in each dimension)
     """
     buff_to_vols = dict()
 
     for buffer_index in range(nb_buffers):
-        _3d_index = get3dpos(buffer_index)
+        _3d_index = numeric_to_3d_pos(buffer_index, blocks_shape, order='C') # to replace by order F, TODO refactor func
         T = list()
         for i in range(3):
             C = (_3d_index[i] * B[i]) % O[i]
             T.append(B[i] - C)
 
-        volumes = get_main_volumes(B, T)
-        hidden_volumes = compute_hidden_volumes(T, O, volumes)
-        volumes.extends(hidden_volumes)
-
-        add_offsets(volumes)
-        buff_to_vols[buffer_index] = volumes
+        volumes_dict = get_main_volumes(B, T)
+        hidden_volumes = compute_hidden_volumes(T, O, volumes_dict)
+        volumes_dict.extends(hidden_volumes)
+        buff_to_vols[buffer_index] = add_offsets(volumes_dict, _3d_index, B)
         
     arrays_dict = get_array_dict(buff_to_vols)
     merge_cached_volumes(arrays_dict)

@@ -4,9 +4,6 @@ def get_crossed_outfiles(buffer_index, outfiles):
 def merge_volumes():
     pass
 
-def get3dpos(buffer_index):
-    pass
-
 def included_in(volume, outfile):
     pass
 

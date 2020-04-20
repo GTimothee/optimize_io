@@ -9,7 +9,7 @@ import operator
 from operator import getitem
 
 from dask_io.optimizer.utils.array_utils import get_arr_shapes
-from dask_io.optimizer.utils.utils import neat_print_graph, ONE_GIG
+from dask_io.optimizer.utils.utils import neat_print_graph, ONE_GIG, numeric_to_3d_pos, _3d_to_numeric_pos
 from dask_io.optimizer.find_proxies import add_to_dict_of_lists
 
 logger = logging.getLogger(__name__)
@@ -409,33 +409,4 @@ def origarr_to_buffer_slices(dicts, proxy, buffer_key, slices, chunk_shape):
     return slices
 
 
-def numeric_to_3d_pos(numeric_pos, blocks_shape, order):
-    if order == 'F':
-        nb_blocks_per_row = blocks_shape[0]
-        nb_blocks_per_slice = blocks_shape[0] * blocks_shape[1]
-    elif order == 'C':
-        nb_blocks_per_row = blocks_shape[2]
-        nb_blocks_per_slice = blocks_shape[1] * blocks_shape[2]
-    else:
-        raise ValueError("unsupported")
 
-    i = math.floor(numeric_pos / nb_blocks_per_slice)
-    numeric_pos -= i * nb_blocks_per_slice
-    j = math.floor(numeric_pos / nb_blocks_per_row)
-    numeric_pos -= j * nb_blocks_per_row
-    k = numeric_pos
-    return (i, j, k)
-
-
-def _3d_to_numeric_pos(_3d_pos, shape, order):
-    if order == 'F':
-        nb_blocks_per_row = shape[0]
-        nb_blocks_per_slice = shape[0] * shape[1]
-    elif order == 'C':
-        nb_blocks_per_row = shape[2]
-        nb_blocks_per_slice = shape[1] * shape[2]
-    else:
-        raise ValueError("unsupported")
-
-    return (_3d_pos[0] * nb_blocks_per_slice) + \
-        (_3d_pos[1] * nb_blocks_per_row) + _3d_pos[2]
