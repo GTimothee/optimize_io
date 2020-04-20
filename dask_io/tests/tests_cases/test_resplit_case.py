@@ -6,11 +6,12 @@ from dask_io.optimizer.cases.resplit_case import Volume, add_offsets
 import logging 
 logger = logging.getLogger('test')
 
-# def test_compute_volumes(): TODO
-#     vols = get_main_volumes(B, T)
-#     hidd_vols = compute_hidden_volumes(T, O)
-#     vols.extends(hidd_vols)
-#     print(vols)
+def test_compute_volumes(): 
+#   vols = get_main_volumes(B, T)
+#   hidd_vols = compute_hidden_volumes(T, O)
+#   vols.extends(hidd_vols)
+#   print(vols)
+    pass
 
 
 def test_Volume_add_offset():
@@ -62,3 +63,16 @@ def test_add_offset():
             t = l[i]
             assert t_test == tuple(map(operator.add, t, offset)) 
   
+
+def test_get_array_dict():
+    # get_array_dict()
+    pass
+
+
+def test_merge_cached_volumes():
+    # merge_cached_volumes(arrays_dict)
+    pass
+
+
+def compute_zones():
+    pass

@@ -12,6 +12,12 @@ class Axes(Enum):
 
 class Volume:
     def __init__(self, index, p1, p2):
+        if not isinstance(index, int):
+            raise TypeError()
+        if not isinstance(p1, tuple) \ 
+            or not isinstance(p2, tuple):
+            raise TypeError()
+
         self.index = index
         self.p1 = p1
         self.p2 = p2
