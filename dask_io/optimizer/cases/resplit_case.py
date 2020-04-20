@@ -1,4 +1,5 @@
 from enum import Enum
+import operator
 from dask_io.optimizer.utils.utils import numeric_to_3d_pos, _3d_to_numeric_pos
 from dask_io.optimizer.cases.resplit_utils import *
 
@@ -16,15 +17,19 @@ class Volume:
         self.p2 = p2
 
     def add_offset(self, offset):
+        """
+        offset: a tuple
+        """
         self.p1 = self._add_offset(self.p1, offset)
         self.p2 = self._add_offset(self.p2, offset)
             
 
     def _add_offset(self, p, offset):
-        p_list = list(p)
-        for dim in range(len(offset)):
-            p_list[dim] += offset[dim]
-        return tuple(p_list)
+        if isinstance(offset, list):
+            offset = tuple(offset)
+        elif not isinstance(offset, tuple):
+            raise TypeError("Expected tuple")
+        return tuple(map(operator.add, p, offset))
 
 
 def get_main_volumes(B, T):
@@ -61,7 +66,7 @@ def get_main_volumes(B, T):
                (T[Axes.i], B[Axes.j], B[Axes.k]))]
 
 
-def compute_hidden_volumes(T, O, volumes):
+def compute_hidden_volumes(T, O, volumes_list):
     """ II- compute hidden output files' positions (in F0)
 
     Hidden volumes are output files inside the f0 volume (see paper).
@@ -73,7 +78,7 @@ def compute_hidden_volumes(T, O, volumes):
     ----------
         T: Theta shape for the buffer being treated (see paper)
         O: output file shape
-        volumes: list of volumes
+        volumes_list: list of volumes
     """
     # a) get volumes' graduation on x, y, z axes
     # i.e. find the crosses in the 2D example drawing below:
@@ -137,16 +142,13 @@ def compute_hidden_volumes(T, O, volumes):
         blc_index[Axis.i] += 1
         trc_index[Axis.i] += 1
 
-    return volumes
 
-
-def add_offsets(volumes_dict, _3d_index, B):
+def add_offsets(volumes_list, _3d_index, B):
     """ III - Add offset to volumes positions to get positions in the reconstructed image.
     """
-    offset = [B[dim] * _3d_index[dim] for dim in len(_3d_index)]
-    for volume in volumes_dict.values():
+    offset = [B[dim] * _3d_index[dim] for dim in range(len(_3d_index))]
+    for volume in volumes_list:
         volume.add_offset(offset)
-    return volumes
 
 
 def get_array_dict(buff_to_vols):
@@ -196,10 +198,10 @@ def compute_zones(B, O, blocks_shape):
             C = (_3d_index[i] * B[i]) % O[i]
             T.append(B[i] - C)
 
-        volumes_dict = get_main_volumes(B, T)
-        hidden_volumes = compute_hidden_volumes(T, O, volumes_dict)
-        volumes_dict.extends(hidden_volumes)
-        buff_to_vols[buffer_index] = add_offsets(volumes_dict, _3d_index, B)
+        volumes_list = get_main_volumes(B, T)
+        hidden_volumes = compute_hidden_volumes(T, O, volumes_list)
+        volumes_list = volumes_list + hidden_volumes
+        buff_to_vols[buffer_index] = add_offsets(volumes_list, _3d_index, B)
         
     arrays_dict = get_array_dict(buff_to_vols)
     merge_cached_volumes(arrays_dict)
