@@ -92,7 +92,10 @@ def get_dask_array_from_hdf5(file_path, dataset_key, logic_cs="auto"):
         else:
             print("logic_cs set to `physical` but dataset not physically chunked. Using `auto` as logic_cs.")
             logic_cs = "auto"
-    
+
+    if logic_cs == "dataset_shape": # TODO: refactor
+        logic_cs = dataset.shape
+
     logger.info("Creating dask array from file using chunk shape: %s", logic_cs)
     return da.from_array(dataset, chunks=logic_cs)
 

@@ -2,6 +2,8 @@ import os
 import h5py
 import pytest
 import numpy as np
+import glob
+import shutil
 
 with open('dask_io/config.json') as json_conffile:
     import json
@@ -12,11 +14,12 @@ with open('dask_io/config.json') as json_conffile:
 import dask
 import dask.array as da
 
-from dask_io.optimizer.cases.case_config import CaseConfig
+from dask_io.optimizer.cases.case_config import Split, Merge
 from dask_io.optimizer.cases.case_creation import get_arr_chunks
 from dask_io.optimizer.configure import enable_clustering, disable_clustering
 from dask_io.optimizer.utils.utils import ONE_GIG, CHUNK_SHAPES_EXP1
 from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
+from dask_io.optimizer.utils.array_utils import inspect_h5py_file
 
 from ..utils import create_test_array_nochunk, ONE_GIG
 
@@ -62,7 +65,7 @@ def test_sum(shape_to_test, nb_chunks):
     logger.info("testing shape %s", shape_to_test)
 
     # prepare test case
-    case = CaseConfig(pytest.test_array_path, shape_to_test)
+    case = Split(pytest.test_array_path, shape_to_test)
     case.sum(nb_chunks)
 
     # non optimized run
@@ -122,7 +125,7 @@ def test_split(optimized, nb_chunks, shape_to_test):
         if os.path.isfile(split_filepath):
             os.remove(split_filepath)
 
-        case = CaseConfig(pytest.test_array_path, shape_to_test)
+        case = Split(pytest.test_array_path, shape_to_test)
         case.split_hdf5(split_filepath, nb_blocks=nb_chunks)
         case.get().compute()
         return 
@@ -147,3 +150,51 @@ def test_split(optimized, nb_chunks, shape_to_test):
     # assert
     arr_list = create_arrays_for_comparison()
     store_correct()
+
+
+def test_split_multiple(shape_to_test, nb_chunks):
+    """ TODO: add asserts -> retrieve chunks and compare to what have been stored.
+    """
+    out_dirpath = './'
+    case = Split(pytest.test_array_path, shape_to_test)
+    case.split_hdf5_multiple(out_dirpath, nb_blocks=None)
+    arr = case.get()
+    # arr.visualize(filename='/tmp/dask_io_visualize_split_multiple.svg')
+    arr.compute()
+    case.clean()
+
+    for filepath in glob.glob("*.hdf5"):
+        logger.info("Inspecting filepath: %s", filepath)
+        with h5py.File(filepath, 'r') as f:
+            inspect_h5py_file(f)
+
+
+def test_split_and_merge_multiple(shape_to_test, nb_chunks): 
+    """ TODO: add asserts -> retrieve chunks and compare to what have been stored.
+    """
+    fileslist = list()
+    for infilepath in glob.glob("[0-9]*_[0-9]*_[0-9]*.hdf5"):  # remove split files from previous tests
+        fileslist.append(infilepath)
+    fileslist.append('./reconstructed.hdf5')
+    for fn in fileslist: 
+        if os.path.isfile(fn):
+            os.remove(fn)
+
+    out_dirpath = './'
+    case = Split(pytest.test_array_path, shape_to_test)
+    case.split_hdf5_multiple(out_dirpath, nb_blocks=None)
+    arr = case.get()
+    arr.compute()
+    case.clean()
+
+    in_dirpath = out_dirpath
+    case = Merge('./reconstructed.hdf5')
+    case.merge_hdf5_multiple(in_dirpath)
+    arr = case.get()
+    arr.compute()
+    case.clean()
+
+    logger.info("Inspecting filepath: './reconstructed.hdf5'")
+    with h5py.File('./reconstructed.hdf5', 'r') as f:
+        inspect_h5py_file(f)
+        assert f['/data'].shape == (100,100,100)

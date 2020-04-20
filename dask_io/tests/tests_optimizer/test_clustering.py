@@ -3,7 +3,7 @@ import sys
 import pytest
 
 from dask_io.optimizer.configure import enable_clustering
-from dask_io.optimizer.cases.case_config import CaseConfig
+from dask_io.optimizer.cases.case_config import Split
 from dask_io.optimizer.utils.array_utils import get_arr_shapes
 from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
 from dask_io.optimizer.find_proxies import get_used_proxies
@@ -44,7 +44,7 @@ def test_get_covered_blocks():
 
 def test_get_blocks_used():
     cs = (20, 20, 20)
-    case = CaseConfig(pytest.test_array_path, cs)
+    case = Split(pytest.test_array_path, cs)
     case.split_hdf5("./split_file.hdf5", nb_blocks=None)
     arr = case.get()
 
@@ -83,7 +83,7 @@ def test_create_buffers_blocks():
     - block size in bytes : (20*20*20) * 2 bytes = 16000 
     """
     cs = (20, 20, 20)
-    case = CaseConfig(pytest.test_array_path, cs)
+    case = Split(pytest.test_array_path, cs)
     case.split_hdf5("./split_file.hdf5", nb_blocks=None)
     arr = case.get()
 
@@ -140,7 +140,7 @@ def test_create_buffers_slabs():
     The only strategy that should be used is ``block slices".
     """
     cs = (5, 100, 100) # 20 chunks
-    case = CaseConfig(pytest.test_array_path, cs)
+    case = Split(pytest.test_array_path, cs)
     case.split_hdf5("./split_file.hdf5", nb_blocks=None)
     arr = case.get()
 
@@ -171,7 +171,7 @@ def test_create_buffers_slabs():
 def test_create_buffer_node():
     # preparation
     cs = (20, 20, 20)
-    case = CaseConfig(pytest.test_array_path, cs)
+    case = Split(pytest.test_array_path, cs)
     case.split_hdf5("./split_file.hdf5", nb_blocks=None)
     arr = case.get()
 

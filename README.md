@@ -1,6 +1,6 @@
 # DASK IO
-[![Build Status](https://travis-ci.com/GTimothee/dask_io.svg?branch=tests)](https://travis-ci.com/GTimothee/dask_io)
-[![Coverage Status](https://coveralls.io/repos/github/GTimothee/dask_io/badge.svg?branch=tests)](https://coveralls.io/github/GTimothee/dask_io?branch=tests)
+[![Build Status](https://travis-ci.com/GTimothee/dask_io.svg?branch=master)](https://travis-ci.com/GTimothee/dask_io)
+[![Coverage Status](https://coveralls.io/repos/github/GTimothee/dask_io/badge.svg?branch=master)](https://coveralls.io/github/GTimothee/dask_io?branch=master)
 
 A module optimizing the task graph in Dask's threaded scheduler in order to faster I/O operations.
 

@@ -3,7 +3,7 @@ import os, pytest
 from dask_io.optimizer.configure import enable_clustering
 from dask_io.optimizer.utils.utils import CHUNK_SHAPES_EXP1
 from dask_io.optimizer.utils.array_utils import get_arr_shapes
-from dask_io.optimizer.cases.case_config import CaseConfig
+from dask_io.optimizer.cases.case_config import Split
 from dask_io.optimizer.find_proxies import *  # package to be tested
 
 from ..utils import create_test_array_nochunk, ONE_GIG
@@ -41,7 +41,7 @@ def test_get_graph_from_dask():
     TODO: Better test function.
     """
     # create config for the test
-    case = CaseConfig(pytest.test_array_path, "auto")
+    case = Split(pytest.test_array_path, "auto")
     case.sum(nb_chunks=None)
     dask_array = case.get()
 

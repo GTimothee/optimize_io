@@ -12,7 +12,7 @@ now = datetime.datetime.now()
 date_info = now.strftime("%c")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 logfilename = "/tmp/dask_io_" + date_info + ".log"
-logging.config.fileConfig(os.path.join(current_dir, 'logging_config.ini'), defaults={'logfilename': logfilename}, disable_existing_loggers=False)
+# logging.config.fileConfig(os.path.join(current_dir, 'logging_config.ini'), defaults={'logfilename': logfilename}, disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
