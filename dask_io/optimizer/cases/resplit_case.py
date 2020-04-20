@@ -4,8 +4,8 @@ from dask_io.optimizer.cases.resplit_utils import *
 
 
 class Axes(Enum):
-    i: 0,
-    j: 1,
+    i: 0
+    j: 1
     k: 2
 
 
@@ -16,11 +16,15 @@ class Volume:
         self.p2 = p2
 
     def add_offset(self, offset):
-        for p in [self.p1, self.p2]:
-            p_list = list(p)
-            for dim in range(len(offset)):
-                p_list[dim] += offset[dim]
-            p = tuple(p_list)
+        self.p1 = self._add_offset(self.p1, offset)
+        self.p2 = self._add_offset(self.p2, offset)
+            
+
+    def _add_offset(self, p, offset):
+        p_list = list(p)
+        for dim in range(len(offset)):
+            p_list[dim] += offset[dim]
+        return tuple(p_list)
 
 
 def get_main_volumes(B, T):
@@ -133,7 +137,7 @@ def compute_hidden_volumes(T, O, volumes):
         blc_index[Axis.i] += 1
         trc_index[Axis.i] += 1
 
-return volumes
+    return volumes
 
 
 def add_offsets(volumes_dict, _3d_index, B):
