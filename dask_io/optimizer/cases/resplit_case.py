@@ -121,13 +121,16 @@ def add_offsets(volumes_list, _3d_index, B):
         volume.add_offset(offset)
 
 
-def get_arrays_dict(buff_to_vols, buffers, outfiles):
+def get_arrays_dict(buff_to_vols, buffers, R, O):
     """ IV - Assigner les volumes à tous les output files, en gardant référence du type de volume que c'est
     """
     array_dict = dict()
 
+    outfiles_partititon = get_blocks_shape(R, O)
+    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+
     for buffer_index, buffer_volumes in buff_to_vols.items():
-        crossed_outfiles = get_crossed_outfiles(buffer_index, buffers, outfiles) # refine search
+        crossed_outfiles = get_crossed_outfiles(buffer_index, buffers, outfiles_volumes) # refine search
 
         for volume in buffer_volumes:
             for outfile in crossed_outfiles:
@@ -158,28 +161,29 @@ def compute_zones(B, O, R, volumestokeep):
         O: output file shape
         R: shape of reconstructed image
     """
-    buffers_shape = get_blocks_shape(R, B)
-    outfiles_shape = get_blocks_shape(R, O)
-    buffers = get_named_volumes(buffers_shape, B)
-    outfiles = get_named_volumes(outfiles_shape, O)
-
-    buff_to_vols = dict()  # associate buffer to volumes contained in it
-    for buffer_index in range(nb_buffers):
-        _3d_index = numeric_to_3d_pos(buffer_index, buffers_shape, order='F')
+    # A/ associate each buffer to volumes contained in it
+    buff_to_vols = dict()
+    buffers_partition = get_blocks_shape(R, B)
+    buffers_volumes = get_named_volumes(buffers_partition, B)
+    for buffer in buffers_volumes:
+        _3d_index = numeric_to_3d_pos(buffer.index, buffers_partition, order='F')
+        
         T = list()
-        for i in range(3):
-            C = (_3d_index[i] * B[i]) % O[i]
-            T.append(B[i] - C)
+        for dim in range(len(buffer.p1)):
+            C = (_3d_index[dim] * B[dim]) % O[dim]
+            T.append(B[dim] - C)
+        volumes_list = get_main_volumes(B, T)  # get coords in basis of buffer
+        volumes_list = volumes_list + compute_hidden_volumes(T, O, volumes_list)  # still in basis of buffer
+        
+        buff_to_vols[buffer.index] = add_offsets(volumes_list, _3d_index, B)  # convert coords in basis of R
 
-        volumes_list = get_main_volumes(B, T)
-        hidden_volumes = compute_hidden_volumes(T, O, volumes_list)
-        volumes_list = volumes_list + hidden_volumes
-        buff_to_vols[buffer_index] = add_offsets(volumes_list, _3d_index, B)
-
-    arrays_dict = get_arrays_dict(buff_to_vols, buffers, outfiles)  # create arrays_dict from buff_to_vols
+    # B/ Create arrays dict from buff_to_vols
+    # arrays_dict associate each output file to parts of it to be stored at a time
+    arrays_dict = get_arrays_dict(buff_to_vols, buffers_volumes, R, O) 
     merge_cached_volumes(arrays_dict, volumestokeep)
     clean_arrays_dict(arrays_dict)
 
+    # C/ Create regions dict from arrays dict
     regions_dict = dict()
     # regions_dict = deepcopy(array_dict)
     # offsets = get_offsets()

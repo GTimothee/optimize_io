@@ -151,9 +151,8 @@ def clean_arrays_dict(arrays_dict):
     The new arrays_dict associates each output file to each volume that must be written at a time.
     """
     for k in arrays_dict.keys():
-        v = arrays_dict[k]
-        slices = convert_Volume_to_slices(v)
-        arrays_dict[k] = v
+        volumes_list = arrays_dict[k]
+        arrays_dict[k] = [convert_Volume_to_slices(v) for v in volumes_list]
 
 
 def get_named_volumes(blocks_partition, block_shape):
