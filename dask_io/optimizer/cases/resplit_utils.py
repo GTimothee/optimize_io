@@ -1,6 +1,8 @@
 from enum import Enum
 import operator
 
+from dask_io.optimizer.utils.utils import _3d_to_numeric_pos
+
 import logging 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,16 @@ class Volume:
 
     def get_corners(self):
         return (self.p1, self.p2)
+
+
+    def equals(self, volume):
+        if not self.index == volume.index:
+            return False 
+        if not self.p1 == volume.p1:
+            return False 
+        if not self.p2 == volume.p2:
+            return False 
+        return True
 
 
 def hypercubes_overlap(hypercube1, hypercube2):
@@ -148,12 +160,17 @@ def get_named_volumes(blocks_partition, block_shape):
     """ Return the coordinates of all entities of shape block shape in the reconstructed image.
     The first entity is placed at the origin of the base.
 
+    Returns: 
+    ---------
+        d: dictionary mapping each buffer numeric index to a Volume representing its coordinates
+
     Arguments: 
     ----------
         blocks_partition: Number of blocks in each dimension. Shape of the reconstructed image in terms of the blocks considered.
         block_shape: shape of one block, all blocks having the same shape 
     """
     d = dict()
+    logger.debug("blocks_partition: %s", blocks_partition)
     for i in range(blocks_partition[0]):
         for j in range(blocks_partition[1]):
             for k in range(blocks_partition[2]):
@@ -163,6 +180,8 @@ def get_named_volumes(blocks_partition, block_shape):
                 tr_corner = (block_shape[0] * (i+1),
                              block_shape[1] * (j+1),
                              block_shape[2] * (k+1))   
-                index = _3d_to_numeric_pos((i, j, k), block_shape, order='C')
+                logger.debug("in 3dtonumericpos: %s, %s", (i, j, k), block_shape)
+                index = _3d_to_numeric_pos((i, j, k), blocks_partition, order='F')
                 d[index] = Volume(index, bl_corner, tr_corner)
+    logger.debug("keys: %s", d.keys())
     return d

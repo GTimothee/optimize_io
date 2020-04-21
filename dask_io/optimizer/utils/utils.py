@@ -2,6 +2,7 @@ import os
 import datetime
 import csv
 import traceback
+import math 
 
 
 ONE_GIG = 1000000000
@@ -73,10 +74,10 @@ def flatten_iterable(l, plain_list=list()):
 
 
 def numeric_to_3d_pos(numeric_pos, blocks_shape, order):
-    if order == 'F':
+    if order == 'C':
         nb_blocks_per_row = blocks_shape[0]
         nb_blocks_per_slice = blocks_shape[0] * blocks_shape[1]
-    elif order == 'C':
+    elif order == 'F':
         nb_blocks_per_row = blocks_shape[2]
         nb_blocks_per_slice = blocks_shape[1] * blocks_shape[2]
     else:
@@ -91,10 +92,10 @@ def numeric_to_3d_pos(numeric_pos, blocks_shape, order):
 
 
 def _3d_to_numeric_pos(_3d_pos, shape, order):
-    if order == 'F':
+    if order == 'C':
         nb_blocks_per_row = shape[0]
         nb_blocks_per_slice = shape[0] * shape[1]
-    elif order == 'C':
+    elif order == 'F':
         nb_blocks_per_row = shape[2]
         nb_blocks_per_slice = shape[1] * shape[2]
     else:

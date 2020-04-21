@@ -103,8 +103,8 @@ def overlap_slice(curr_buff, buff, blocks_shape):
     """
     end_of_buffer = curr_buff[-1]
     start_of_row = buff[0]
-    i_1 = numeric_to_3d_pos(end_of_buffer, blocks_shape, order='C')[0]
-    i_2 = numeric_to_3d_pos(start_of_row, blocks_shape, order='C')[0]
+    i_1 = numeric_to_3d_pos(end_of_buffer, blocks_shape, order='F')[0]
+    i_2 = numeric_to_3d_pos(start_of_row, blocks_shape, order='F')[0]
     if i_1 != i_2:
         return True
     return False
@@ -292,7 +292,7 @@ def get_blocks_used(dicts, origarr_name, arr_obj, chunk_shape):
                 for z in z_range:
                     if (x, y, z) not in blocks_seen:
                         blocks_seen.append((x, y, z))
-                        num_pos = _3d_to_numeric_pos((x, y, z), blocks_shape, 'C')
+                        num_pos = _3d_to_numeric_pos((x, y, z), blocks_shape, 'F')
                         logger.debug(f'Associated {num_pos} to {(x, y, z)} using block shape: {blocks_shape}')
                         blocks_used.append(num_pos)
                         block_to_proxies = add_to_dict_of_lists(block_to_proxies, num_pos, proxy_key, unique=True)
@@ -371,7 +371,7 @@ def get_buffer_slices_from_original_array(load, shape, original_array_chunk):
         numeric_to_3d_pos(
             num_pos,
             shape,
-            order='C') for num_pos in all_block_num_indexes]
+            order='F') for num_pos in all_block_num_indexes]
 
     mini = [None, None, None]
     maxi = [None, None, None]
@@ -397,7 +397,7 @@ def origarr_to_buffer_slices(dicts, proxy, buffer_key, slices, chunk_shape):
     img_nb_blocks_per_dim = dicts['origarr_to_blocks_shape'][origarr_name]
 
     block_id, start_block, end_block = buffer_key
-    start_pos = numeric_to_3d_pos(start_block, img_nb_blocks_per_dim, 'C')
+    start_pos = numeric_to_3d_pos(start_block, img_nb_blocks_per_dim, 'F')
     offset = [x * i for x, i in zip(start_pos, chunk_shape)]
 
     new_slices = list()

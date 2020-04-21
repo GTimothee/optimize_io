@@ -1,4 +1,5 @@
 from dask_io.optimizer.cases.resplit_utils import *
+from dask_io.optimizer.utils.utils import _3d_to_numeric_pos
 
 
 def test_Volume_add_offset():
@@ -42,3 +43,66 @@ def test_get_blocks_shape():
 
     for big_array, small_array, blocks in zip(big_arrays, small_arrays, expected):
         assert get_blocks_shape(big_array, small_array) == blocks
+
+
+def test_Volume_equals():
+    v1 = Volume(1, (1,2,3), (4,5,6))
+    v2 = Volume(1, (1,2,3), (4,5,6))
+    assert v1.equals(v2) == True
+
+
+def test__3d_to_numeric_pos():
+    table_F_order = {
+        (0,0,0): 0,
+        (0,0,1): 1,
+        (0,1,0): 2,
+        (0,1,1): 3,
+        (1,0,0): 4,
+        (1,0,1): 5,
+        (1,1,0): 6,
+        (1,1,1): 7,
+    }
+
+    # table_C_order = { TODO
+    #     (0,0,0): 0,
+    #     (0,0,1): 4,
+    #     (0,1,0): 2,
+    #     (0,1,1): 6,
+    #     (1,0,0): 1,
+    #     (1,0,1): 5,
+    #     (1,1,0): 3,
+    #     (1,1,1): 7,
+    # }
+
+    for _3d_pos, numeric_pos in table_F_order.items():
+        res = _3d_to_numeric_pos(_3d_pos, (2,2,2), order='F')
+        assert res == numeric_pos
+
+    # for _3d_pos, numeric_pos in table_C_order.items():
+    #     res = _3d_to_numeric_pos(_3d_pos, (2,2,2), order='F')
+    #     assert res == numeric_pos
+
+
+def test_get_named_volumes():
+    R = (60, 40, 30)
+    B = (30, 20, 15)
+    blocks_partition = get_blocks_shape(R, B)
+    buffers = get_named_volumes(blocks_partition, B)
+    expected = {
+        0: Volume(0, (0,0,0), (30, 20, 15)),
+        1: Volume(1, (0,0,15), (30, 20, 30)),
+        2: Volume(2, (0,20,0), (30, 40, 15)),
+        3: Volume(3, (0,20,15), (30, 40, 30)),
+        4: Volume(4, (30,0,0), (60, 20, 15)),
+        5: Volume(5, (30,0,15), (60, 20, 30)),
+        6: Volume(6, (30,20,0), (60, 40, 15)),
+        7: Volume(7, (30,20,15), (60, 40, 30)), 
+    }
+    for k in expected.keys():
+        assert expected[k].equals(buffers[k])
+
+
+# def test_get_crossed_outfiles():
+
+#     buffer_index = 
+#     get_crossed_outfiles(buffer_index, buffers, outfiles)

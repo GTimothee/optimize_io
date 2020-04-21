@@ -165,7 +165,7 @@ def compute_zones(B, O, R):
 
     buff_to_vols = dict()  # associate buffer to volumes contained in it
     for buffer_index in range(nb_buffers):
-        _3d_index = numeric_to_3d_pos(buffer_index, buffers_shape, order='C') # to replace by order F, TODO refactor func
+        _3d_index = numeric_to_3d_pos(buffer_index, buffers_shape, order='F')
         T = list()
         for i in range(3):
             C = (_3d_index[i] * B[i]) % O[i]
