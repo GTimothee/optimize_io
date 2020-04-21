@@ -150,8 +150,8 @@ def merge_cached_volumes(arrays_dict, merge_rules):
             volume = volumes[i]
             if volume.index in merge_rules.keys():
                 merge_directions = merge_rules[volume.index]
-                for axis in merge_directions:
-                    apply_merge(volume, volumes, axis)
+                new_volume = apply_merge(volume, volumes, merge_directions)
+                volumes[i] = new_volume
 
 
 def get_merge_rules(volumestokeep):

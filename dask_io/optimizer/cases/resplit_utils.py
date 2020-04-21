@@ -186,5 +186,59 @@ def get_named_volumes(blocks_partition, block_shape):
     return d
 
 
-def apply_merge(volume, volumes, axis):
-    pass
+def apply_merge(volume, volumes, merge_directions):
+    
+    def get_volume(lowcorner):
+        for i in len(volumes):
+            v = volumes[i]
+            if v.p1 == lowcorner:
+                return volume.pop(i)
+        raise ValueError()
+
+    import copy
+
+    p1, p2 = volume.get_corners()
+
+    if Axes.k in merge_directions:
+        p1_target = copy.deepcopy(p1)
+        p1_target[Axes.k] = p2[Axes.k]
+        v2 = get_volume(p1_target)
+        new_volume = merge_volumes(volume, v2)
+
+    elif Axes.j in merge_directions:
+        p1_target = copy.deepcopy(p1)
+        p1_target[Axes.j] = p2[Axes.j]
+        v2 = get_volume(p1_target)
+        new_volume = merge_volumes(volume, v2)
+
+    elif Axes.i in merge_directions:
+        p1_target = copy.deepcopy(p1)
+        p1_target[Axes.i] = p2[Axes.i]
+        v2 = get_volume(p1_target)
+        new_volume = merge_volumes(volume, v2)
+
+    elif len(merge_directions) == 2:
+        axis1, axis2 = merge_directions
+
+        p1_target = copy.deepcopy(p1)
+        p1_target[axis1] = p2[axis1]
+        volume_axis1 = get_volume(p1_target)
+
+        new_volume_axis1 = apply_merge(volume_axis1, volumes, [axis2])
+        new_volume_axis2 = apply_merge(volume, volumes, [axis2])
+        new_volume = merge_volumes(new_volume_axis1, new_volume_axis2)
+
+    elif len(merge_directions) == 3:
+        axis1, axis2, axis3 = merge_directions
+        
+        p1_target = copy.deepcopy(p1)
+        p1_target[axis1] = p2[axis1]
+        volume_axis1 = get_volume(p1_target)
+
+        new_vol1 = apply_merge(volume, volumes, [axis2, axis3])
+        new_vol2 = apply_merge(volume_axis1, volumes, [axis2, axis3])
+        new_volume = merge_volumes(new_vol1, new_vol2)
+
+    else:
+        raise ValueError()
+    return new_volume
