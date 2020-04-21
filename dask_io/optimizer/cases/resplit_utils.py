@@ -1,6 +1,8 @@
 from enum import Enum
 import operator
 
+import logging 
+logger = logging.getLogger(__name__)
 
 class Axes(Enum):
     i: 0
@@ -46,12 +48,12 @@ def hypercubes_overlap(hypercube1, hypercube2):
         not isinstance(hypercube2, Volume):
         raise TypeError()
 
-    lowercorner1, uppercorner1 = hypercube1
-    lowercorner2, uppercorner2 = hypercube2
+    lowercorner1, uppercorner1 = hypercube1.get_corners()
+    lowercorner2, uppercorner2 = hypercube2.get_corners()
     nb_dims = len(uppercorner1)
     
     for i in range(nb_dims):
-        if not uppercorner1[i] > lowercorner1[i] and \
+        if not uppercorner1[i] > lowercorner2[i] or \
             not uppercorner2[i] > lowercorner1[i]:
             return False
 

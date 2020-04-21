@@ -1,25 +1,12 @@
 import numpy as np
 import operator
 
-from dask_io.optimizer.cases.resplit_case import Volume, add_offsets
+from dask_io.optimizer.cases.resplit_utils import Volume
+from dask_io.optimizer.cases.resplit_case import add_offsets
 
 import logging 
 logger = logging.getLogger('test')
 
-def test_compute_volumes(): 
-#   vols = get_main_volumes(B, T)
-#   hidd_vols = compute_hidden_volumes(T, O)
-#   vols.extends(hidd_vols)
-#   print(vols)
-    pass
-
-
-def test_Volume_add_offset():
-    v1 = Volume(1, (1,2,3), (4,5,6))
-    v1.add_offset((5, 2, 3))
-    assert v1.p1 == (6, 4, 6)
-    assert v1.p2 == (9, 7, 9)
-    
 
 def test_add_offset():
     def get_rand(max, size):
@@ -62,17 +49,3 @@ def test_add_offset():
         for i, t_test in enumerate(l_test):
             t = l[i]
             assert t_test == tuple(map(operator.add, t, offset)) 
-  
-
-def test_get_array_dict():
-    # get_array_dict()
-    pass
-
-
-def test_merge_cached_volumes():
-    # merge_cached_volumes(arrays_dict)
-    pass
-
-
-def compute_zones():
-    pass
