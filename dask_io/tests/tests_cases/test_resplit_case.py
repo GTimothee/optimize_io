@@ -2,7 +2,7 @@ import numpy as np
 import operator
 
 from dask_io.optimizer.cases.resplit_utils import Volume
-from dask_io.optimizer.cases.resplit_case import add_offsets
+from dask_io.optimizer.cases.resplit_case import add_offsets, compute_zones
 
 import logging 
 logger = logging.getLogger('test')
@@ -108,5 +108,8 @@ def test_compute_zones():
         ]
     }
 
-    # test_arrays, _ = compute_zones(B, O, R, volumestokeep)
-    pass 
+    R = (120,120,1)
+    B = (60,60,1)
+    O = (40,40,1)
+    volumes_to_keep = [1]
+    test_arrays, _ = compute_zones(B, O, R, volumes_to_keep)

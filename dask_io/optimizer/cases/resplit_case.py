@@ -1,3 +1,5 @@
+import math
+
 from dask_io.optimizer.utils.utils import numeric_to_3d_pos, _3d_to_numeric_pos
 from dask_io.optimizer.cases.resplit_utils import *
 
@@ -36,7 +38,7 @@ def get_main_volumes(B, T):
                (B[Axes.i.value], B[Axes.j.value], B[Axes.k.value]))]
 
 
-def compute_hidden_volumes(T, O, volumes_list):
+def compute_hidden_volumes(T, O):
     """ II- compute hidden output files' positions (in F0)
 
     Hidden volumes are output files inside the f0 volume (see paper).
@@ -48,7 +50,6 @@ def compute_hidden_volumes(T, O, volumes_list):
     ----------
         T: Theta shape for the buffer being treated (see paper)
         O: output file shape
-        volumes_list: list of volumes
     """
     # a) get volumes' graduation on x, y, z axes
     # i.e. find the crosses in the 2D example drawing below:
@@ -68,7 +69,7 @@ def compute_hidden_volumes(T, O, volumes_list):
     for dim in range(3):
         points_on_axis = list()
         nb_hidden_volumes = T[dim]/O[dim] 
-        nb_complete_vols = floor(nb_hidden_volumes) 
+        nb_complete_vols = math.floor(nb_hidden_volumes) 
 
         a = T[dim]
         points_on_axis.append(a)
@@ -96,22 +97,32 @@ def compute_hidden_volumes(T, O, volumes_list):
     # |   hidden   |  |      | ← Theta[k]
     # blc1-------------      ▼
 
+
+    hidden_volumes = list()
     index = 7 # key of the volume in the dictionary of volumes, [1 -> 7 included] already taken
     for i in range(len(points[0])-1):
         for j in range(len(points[1])-1):
             for k in range(len(points[2])-1):
+                logger.debug("blc_index: %s", blc_index)
+                logger.debug("trc_index: %s", trc_index)
                 corners = [(points[0][blc_index[0]], points[1][blc_index[1]], points[2][blc_index[2]]),
                            (points[0][trc_index[0]], points[1][trc_index[1]], points[2][trc_index[2]])]
                 index += 1
-                volumes.append(Volume(index, corners[0], corners[1]))
+                hidden_volumes.append(Volume(index, corners[0], corners[1]))
 
-                blc_index[Axis.k] += 1
-                trc_index[Axis.k] += 1
-            blc_index[Axis.j] += 1
-            trc_index[Axis.j] += 1
-        blc_index[Axis.i] += 1
-        trc_index[Axis.i] += 1
-
+                blc_index[Axes.k.value] += 1
+                trc_index[Axes.k.value] += 1
+            blc_index[Axes.j.value] += 1
+            trc_index[Axes.j.value] += 1
+            blc_index[Axes.k.value] = 0
+            trc_index[Axes.k.value] = 1
+        blc_index[Axes.i.value] += 1
+        trc_index[Axes.i.value] += 1
+        blc_index[Axes.j.value] = 0
+        trc_index[Axes.j.value] = 1
+        blc_index[Axes.k.value] = 0
+        trc_index[Axes.k.value] = 1
+    return hidden_volumes
 
 def add_offsets(volumes_list, _3d_index, B):
     """ III - Add offset to volumes positions to get positions in the reconstructed image.
@@ -144,9 +155,9 @@ def get_arrays_dict(buff_to_vols, buffers, R, O):
 def merge_cached_volumes(arrays_dict, merge_rules):
     """ V - Pour chaque output file, pour chaque volume, si le volume doit être kept alors fusionner
     """
-    for outfileindex in array_dict.keys():
-        volumes = array_dict[outfileindex]
-        for i in len(volumes):
+    for outfileindex in arrays_dict.keys():
+        volumes = arrays_dict[outfileindex]
+        for i in range(len(volumes)):
             volume = volumes[i]
             if volume.index in merge_rules.keys():
                 merge_directions = merge_rules[volume.index]
@@ -167,10 +178,10 @@ def get_merge_rules(volumestokeep):
         6: [Axes.j] if 6 in volumestokeep else None,
         7: [Axes.k, Axes.j] if 7 in volumestokeep else None
     }
-    rules[3].append(Axes.j) if 2 in volumestokeep else pass 
+    rules[3].append(Axes.j) if 2 in volumestokeep else None
     for i in [5,6,7]:
-        rules[i].append(Axes.i) if 4 in volumestokeep
-    for k in rules.keys():
+        rules[i].append(Axes.i) if 4 in volumestokeep else None
+    for k in list(rules.keys()):
         if rules[k] == None:
             del rules[k]  # see usage in merge_cached_volumes
     return rules
@@ -190,17 +201,17 @@ def compute_zones(B, O, R, volumestokeep):
     buff_to_vols = dict()
     buffers_partition = get_blocks_shape(R, B)
     buffers_volumes = get_named_volumes(buffers_partition, B)
-    for buffer in buffers_volumes:
-        _3d_index = numeric_to_3d_pos(buffer.index, buffers_partition, order='F')
+    for buffer_index in buffers_volumes.keys():
+        _3d_index = numeric_to_3d_pos(buffer_index, buffers_partition, order='F')
         
         T = list()
-        for dim in range(len(buffer.p1)):
+        for dim in range(len(buffers_volumes[buffer_index].p1)):
             C = (_3d_index[dim] * B[dim]) % O[dim]
             T.append(B[dim] - C)
         volumes_list = get_main_volumes(B, T)  # get coords in basis of buffer
-        volumes_list = volumes_list + compute_hidden_volumes(T, O, volumes_list)  # still in basis of buffer
-        
-        buff_to_vols[buffer.index] = add_offsets(volumes_list, _3d_index, B)  # convert coords in basis of R
+        volumes_list = volumes_list + compute_hidden_volumes(T, O)  # still in basis of buffer
+        add_offsets(volumes_list, _3d_index, B)  # convert coords in basis of R
+        buff_to_vols[buffer_index] = volumes_list
 
     # B/ Create arrays dict from buff_to_vols
     # arrays_dict associate each output file to parts of it to be stored at a time
