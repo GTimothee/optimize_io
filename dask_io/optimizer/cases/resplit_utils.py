@@ -7,9 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Axes(Enum):
-    i: 0
-    j: 1
-    k: 2
+    i = 0
+    j = 1
+    k = 2
 
 
 class Volume:
@@ -187,12 +187,23 @@ def get_named_volumes(blocks_partition, block_shape):
 
 
 def apply_merge(volume, volumes, merge_directions):
+    """ Merge volume with other volumes from volumes list in the merge directions.
+
+    Arguments: 
+    ----------
+        volume: volume to merge
+        volumes: list of volumes 
+        merge_directions: indicates neighbours to merge with
+    """
     
     def get_volume(lowcorner):
-        for i in len(volumes):
+        if not isinstance(lowcorner, tuple):
+            raise TypeError()  # required for "=="
+
+        for i in range(len(volumes)):
             v = volumes[i]
             if v.p1 == lowcorner:
-                return volume.pop(i)
+                return volumes.pop(i)
         raise ValueError()
 
     import copy
@@ -200,40 +211,40 @@ def apply_merge(volume, volumes, merge_directions):
     p1, p2 = volume.get_corners()
 
     if Axes.k in merge_directions:
-        p1_target = copy.deepcopy(p1)
-        p1_target[Axes.k] = p2[Axes.k]
-        v2 = get_volume(p1_target)
+        p1_target = list(copy.deepcopy(p1))
+        p1_target[Axes.k.value] = p2[Axes.k.value]
+        v2 = get_volume(tuple(p1_target))
         new_volume = merge_volumes(volume, v2)
 
     elif Axes.j in merge_directions:
-        p1_target = copy.deepcopy(p1)
-        p1_target[Axes.j] = p2[Axes.j]
-        v2 = get_volume(p1_target)
+        p1_target = list(copy.deepcopy(p1))
+        p1_target[Axes.j.value] = p2[Axes.j.value]
+        v2 = get_volume(tuple(p1_target))
         new_volume = merge_volumes(volume, v2)
 
     elif Axes.i in merge_directions:
-        p1_target = copy.deepcopy(p1)
-        p1_target[Axes.i] = p2[Axes.i]
-        v2 = get_volume(p1_target)
+        p1_target = list(copy.deepcopy(p1))
+        p1_target[Axes.i.value] = p2[Axes.i.value]
+        v2 = get_volume(tuple(p1_target))
         new_volume = merge_volumes(volume, v2)
 
     elif len(merge_directions) == 2:
-        axis1, axis2 = merge_directions
+        axis1, axis2 = map(lambda ax: ax.value, merge_directions)
 
-        p1_target = copy.deepcopy(p1)
+        p1_target = list(copy.deepcopy(p1))
         p1_target[axis1] = p2[axis1]
-        volume_axis1 = get_volume(p1_target)
+        volume_axis1 = get_volume(tuple(p1_target))
 
         new_volume_axis1 = apply_merge(volume_axis1, volumes, [axis2])
         new_volume_axis2 = apply_merge(volume, volumes, [axis2])
         new_volume = merge_volumes(new_volume_axis1, new_volume_axis2)
 
     elif len(merge_directions) == 3:
-        axis1, axis2, axis3 = merge_directions
+        axis1, axis2, axis3 = map(lambda ax: ax.value, merge_directions)
         
-        p1_target = copy.deepcopy(p1)
+        p1_target = list(copy.deepcopy(p1))
         p1_target[axis1] = p2[axis1]
-        volume_axis1 = get_volume(p1_target)
+        volume_axis1 = get_volume(tuple(p1_target))
 
         new_vol1 = apply_merge(volume, volumes, [axis2, axis3])
         new_vol2 = apply_merge(volume_axis1, volumes, [axis2, axis3])

@@ -136,3 +136,23 @@ def test_convert_Volume_to_slices():
     v = Volume(0, (0,40,1), (40,60,1))
     expected = (slice(0, 40, None), slice(40, 60, None), slice(1, 1, None))
     assert convert_Volume_to_slices(v) == expected
+
+
+def test_apply_merge():
+    def assertion(res_vol, p1, p2):
+        assert p1 == res_vol.p1
+        assert p2 == res_vol.p2
+
+    volumes = [
+        Volume(0, (0,0,0), (5,5,5)),
+        Volume(1, (0,0,5), (5,5,10)),
+        Volume(2, (0,5,0), (5,10,5)),
+        Volume(3, (0,5,5), (5,10,10)),
+        Volume(4, (5,0,0), (10,5,5)),
+        Volume(5, (5,0,5), (10,5,10)),
+        Volume(6, (5,5,0), (10,10,5)),
+        Volume(7, (5,5,5), (10,10,10)),
+    ]
+    
+    import copy 
+    assertion(apply_merge(volumes[0], copy.deepcopy(volumes), [Axes.k]), (0,0,0), (5,5,10))

@@ -14,26 +14,26 @@ def get_main_volumes(B, T):
     """
     return [
         Volume(1,
-               (0,0,T[Axes.k]),
-               (T[Axes.i], T[Axes.j], B[Axes.k])),
+               (0,0,T[Axes.k.value]),
+               (T[Axes.i.value], T[Axes.j.value], B[Axes.k.value])),
         Volume(2,
-               (0, T[Axes.j], 0),
-               (T[Axes.i], B[Axes.j], T[Axes.k])),
+               (0, T[Axes.j.value], 0),
+               (T[Axes.i.value], B[Axes.j.value], T[Axes.k.value])),
         Volume(3,
-               (0, T[Axes.j], T[Axes.k]),
-               (T[Axes.i], B[Axes.j], B[Axes.k])),
+               (0, T[Axes.j.value], T[Axes.k.value]),
+               (T[Axes.i.value], B[Axes.j.value], B[Axes.k.value])),
         Volume(4,
-               (T[Axes.i], 0, 0),
-               (B[Axes.i], T[Axes.j], T[Axes.k])),
+               (T[Axes.i.value], 0, 0),
+               (B[Axes.i.value], T[Axes.j.value], T[Axes.k.value])),
         Volume(5,
-               (T[Axes.i], 0, T[Axes.k]),
-               (B[Axes.i], T[Axes.j], B[Axes.k])),
+               (T[Axes.i.value], 0, T[Axes.k.value]),
+               (B[Axes.i.value], T[Axes.j.value], B[Axes.k.value])),
         Volume(6,
-               (T[Axes.i], T[Axes.j], 0),
-               (B[Axes.i], B[Axes.j], T[Axes.k])),
+               (T[Axes.i.value], T[Axes.j.value], 0),
+               (B[Axes.i.value], B[Axes.j.value], T[Axes.k.value])),
         Volume(7,
-               (T[Axes.i], T[Axes.j], T[Axes.k]),
-               (B[Axes.i], B[Axes.j], B[Axes.k]))]
+               (T[Axes.i.value], T[Axes.j.value], T[Axes.k.value]),
+               (B[Axes.i.value], B[Axes.j.value], B[Axes.k.value]))]
 
 
 def compute_hidden_volumes(T, O, volumes_list):
