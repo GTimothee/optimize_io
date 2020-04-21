@@ -102,8 +102,8 @@ def merge_volumes(volume1, volume2):
         not isinstance(volume2, Volume):
         raise TypeError()
 
-    lowercorner1, uppercorner1 = volume1
-    lowercorner2, uppercorner2 = volume2
+    lowercorner1, uppercorner1 = volume1.get_corners()
+    lowercorner2, uppercorner2 = volume2.get_corners()
     lowercorner = (min(lowercorner1[0], lowercorner2[0]), 
                    min(lowercorner1[1], lowercorner2[1]),
                    min(lowercorner1[2], lowercorner2[2]))

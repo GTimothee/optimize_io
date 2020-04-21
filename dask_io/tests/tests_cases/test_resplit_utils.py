@@ -122,3 +122,11 @@ def test_get_crossed_outfiles():
         crossed = get_crossed_outfiles(buffer_index, buffers, outfiles)
         indices = [v.index for v in crossed]
         assert set(expected[buffer_index]) == set(indices)
+
+
+def test_merge_volumes():
+    v1 = Volume(0, (0,40,1), (40,60,1))
+    v2 = Volume(1, (0,60,1), (40,80,1))
+    v3 = merge_volumes(v1, v2)
+    assert v3.p1 == (0,40,1)
+    assert v3.p2 == (40,80,1)
