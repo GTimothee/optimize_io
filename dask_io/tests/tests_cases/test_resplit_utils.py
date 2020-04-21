@@ -130,3 +130,9 @@ def test_merge_volumes():
     v3 = merge_volumes(v1, v2)
     assert v3.p1 == (0,40,1)
     assert v3.p2 == (40,80,1)
+
+
+def test_convert_Volume_to_slices():
+    v = Volume(0, (0,40,1), (40,60,1))
+    expected = (slice(0, 40, None), slice(40, 60, None), slice(1, 1, None))
+    assert convert_Volume_to_slices(v) == expected

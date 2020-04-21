@@ -143,7 +143,7 @@ def convert_Volume_to_slices(v):
     if not isinstance(v, Volume):
         raise TypeError()
     p1, p2 = v.get_corners()
-    return [slice(p1[dim], p2[dim], None) for dim in range(len(p1))]
+    return tuple([slice(p1[dim], p2[dim], None) for dim in range(len(p1))])
 
 
 def clean_arrays_dict(arrays_dict):
