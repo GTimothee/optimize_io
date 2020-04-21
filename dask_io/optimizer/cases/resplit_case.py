@@ -141,15 +141,39 @@ def get_arrays_dict(buff_to_vols, buffers, R, O):
     return array_dict
 
 
-def merge_cached_volumes(arrays_dict, volumestokeep):
+def merge_cached_volumes(arrays_dict, merge_rules):
     """ V - Pour chaque output file, pour chaque volume, si le volume doit être kept alors fusionner
     """
     for outfileindex in array_dict.keys():
         volumes = array_dict[outfileindex]
-        for volume in volumes:
-            if volume.index in volumestokeep:
-                merge_volumes(volumes, volume.index)
-        array_dict[outfileindex] = map_to_slices(volumes)
+        for i in len(volumes):
+            volume = volumes[i]
+            if volume.index in merge_rules.keys():
+                merge_directions = merge_rules[volume.index]
+                for axis in merge_directions:
+                    apply_merge(volume, volumes, axis)
+
+
+def get_merge_rules(volumestokeep):
+    """ Get merge rules corresponding to volumes to keep.
+    See thesis for explanation of the rules.
+    """
+    rules = {
+        1: [Axes.k] if 1 in volumestokeep else None,
+        2: [Axes.j] if 2 in volumestokeep else None,
+        3: [Axes.k] if 3 in volumestokeep else None,
+        4: [Axes.i] if 4 in volumestokeep else None,
+        5: [Axes.k] if 5 in volumestokeep else None,
+        6: [Axes.j] if 6 in volumestokeep else None,
+        7: [Axes.k, Axes.j] if 7 in volumestokeep else None
+    }
+    rules[3].append(Axes.j) if 2 in volumestokeep else pass 
+    for i in [5,6,7]:
+        rules[i].append(Axes.i) if 4 in volumestokeep
+    for k in rules.keys():
+        if rules[k] == None:
+            del rules[k]  # see usage in merge_cached_volumes
+    return rules
 
 
 def compute_zones(B, O, R, volumestokeep):
@@ -160,6 +184,7 @@ def compute_zones(B, O, R, volumestokeep):
         B: buffer shape
         O: output file shape
         R: shape of reconstructed image
+        volumestokeep: volumes to be kept by keep strategy
     """
     # A/ associate each buffer to volumes contained in it
     buff_to_vols = dict()
@@ -180,7 +205,8 @@ def compute_zones(B, O, R, volumestokeep):
     # B/ Create arrays dict from buff_to_vols
     # arrays_dict associate each output file to parts of it to be stored at a time
     arrays_dict = get_arrays_dict(buff_to_vols, buffers_volumes, R, O) 
-    merge_cached_volumes(arrays_dict, volumestokeep)
+    merge_rules = get_merge_rules(volumestokeep)
+    merge_cached_volumes(arrays_dict, merge_rules)
     clean_arrays_dict(arrays_dict)
 
     # C/ Create regions dict from arrays dict

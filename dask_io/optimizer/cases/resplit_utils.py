@@ -184,3 +184,7 @@ def get_named_volumes(blocks_partition, block_shape):
                 d[index] = Volume(index, bl_corner, tr_corner)
     logger.debug("keys: %s", d.keys())
     return d
+
+
+def apply_merge(volume, volumes, axis):
+    pass
