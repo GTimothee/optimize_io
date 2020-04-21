@@ -203,36 +203,40 @@ def apply_merge(volume, volumes, merge_directions):
         for i in range(len(volumes)):
             v = volumes[i]
             if v.p1 == lowcorner:
+                logger.debug("merging volume with low corner %s", v.p1)
                 return volumes.pop(i)
         raise ValueError()
 
     import copy
 
     p1, p2 = volume.get_corners()
+    logger.debug("targetting volume with low corner %s", p1)
 
-    if Axes.k in merge_directions:
-        p1_target = list(copy.deepcopy(p1))
-        p1_target[Axes.k.value] = p2[Axes.k.value]
-        v2 = get_volume(tuple(p1_target))
-        new_volume = merge_volumes(volume, v2)
+    if len(merge_directions) == 1:
+        if Axes.k in merge_directions:
+            p1_target = list(copy.deepcopy(p1))
+            p1_target[Axes.k.value] = p2[Axes.k.value]
+            v2 = get_volume(tuple(p1_target))
+            new_volume = merge_volumes(volume, v2)
 
-    elif Axes.j in merge_directions:
-        p1_target = list(copy.deepcopy(p1))
-        p1_target[Axes.j.value] = p2[Axes.j.value]
-        v2 = get_volume(tuple(p1_target))
-        new_volume = merge_volumes(volume, v2)
+        elif Axes.j in merge_directions:
+            p1_target = list(copy.deepcopy(p1))
+            p1_target[Axes.j.value] = p2[Axes.j.value]
+            v2 = get_volume(tuple(p1_target))
+            new_volume = merge_volumes(volume, v2)
 
-    elif Axes.i in merge_directions:
-        p1_target = list(copy.deepcopy(p1))
-        p1_target[Axes.i.value] = p2[Axes.i.value]
-        v2 = get_volume(tuple(p1_target))
-        new_volume = merge_volumes(volume, v2)
+        elif Axes.i in merge_directions:
+            p1_target = list(copy.deepcopy(p1))
+            p1_target[Axes.i.value] = p2[Axes.i.value]
+            v2 = get_volume(tuple(p1_target))
+            new_volume = merge_volumes(volume, v2)
 
     elif len(merge_directions) == 2:
-        axis1, axis2 = map(lambda ax: ax.value, merge_directions)
+        logger.debug("merge directions: %s", merge_directions)
+        axis1, axis2 = merge_directions
 
         p1_target = list(copy.deepcopy(p1))
-        p1_target[axis1] = p2[axis1]
+        p1_target[axis1.value] = p2[axis1.value]
         volume_axis1 = get_volume(tuple(p1_target))
 
         new_volume_axis1 = apply_merge(volume_axis1, volumes, [axis2])
@@ -240,10 +244,11 @@ def apply_merge(volume, volumes, merge_directions):
         new_volume = merge_volumes(new_volume_axis1, new_volume_axis2)
 
     elif len(merge_directions) == 3:
-        axis1, axis2, axis3 = map(lambda ax: ax.value, merge_directions)
+        logger.debug("merge directions %s", merge_directions)
+        axis1, axis2, axis3 = merge_directions
         
         p1_target = list(copy.deepcopy(p1))
-        p1_target[axis1] = p2[axis1]
+        p1_target[axis1.value] = p2[axis1.value]
         volume_axis1 = get_volume(tuple(p1_target))
 
         new_vol1 = apply_merge(volume, volumes, [axis2, axis3])

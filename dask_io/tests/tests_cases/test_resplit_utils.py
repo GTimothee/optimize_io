@@ -156,3 +156,9 @@ def test_apply_merge():
     
     import copy 
     assertion(apply_merge(volumes[0], copy.deepcopy(volumes), [Axes.k]), (0,0,0), (5,5,10))
+    assertion(apply_merge(volumes[0], copy.deepcopy(volumes), [Axes.j]), (0,0,0), (5,10,5))
+    assertion(apply_merge(volumes[0], copy.deepcopy(volumes), [Axes.i]), (0,0,0), (10,5,5))
+    assertion(apply_merge(volumes[0], copy.deepcopy(volumes), [Axes.j, Axes.k]), (0,0,0), (5,10,10))
+    assertion(apply_merge(volumes[0], copy.deepcopy(volumes), [Axes.j, Axes.i]), (0,0,0), (10,10,5))
+    assertion(apply_merge(volumes[0], copy.deepcopy(volumes), [Axes.i, Axes.k]), (0,0,0), (10,5,10))
+    assertion(apply_merge(volumes[0], copy.deepcopy(volumes), [Axes.i, Axes.j, Axes.k]), (0,0,0), (10,10,10))
