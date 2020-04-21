@@ -49,3 +49,64 @@ def test_add_offset():
         for i, t_test in enumerate(l_test):
             t = l[i]
             assert t_test == tuple(map(operator.add, t, offset)) 
+
+
+def test_compute_zones():
+    d_arrays = {
+        0: [(slice(0, 40, None), slice(0, 40, None), slice(None, None, None))],
+        1: [(slice(0, 40, None), slice(40, 80, None), slice(None, None, None))],
+        2: [(slice(0, 40, None), slice(80, 120, None), slice(None, None, None))],
+        3: [(slice(40, 60, None), slice(0, 40, None), slice(None, None, None)),
+            (slice(60, 80, None), slice(0, 40, None), slice(None, None, None))],
+        4: [(slice(40, 60, None), slice(40, 60, None), slice(None, None, None)),
+        (slice(40, 60, None), slice(60, 80, None), slice(None, None, None)),
+        (slice(60, 80, None), slice(40, 80, None), slice(None, None, None))],
+        5: [(slice(40, 60, None), slice(80, 120, None), slice(None, None, None)),
+            (slice(60, 80, None), slice(80, 120, None), slice(None, None, None))],
+        6: [
+            (slice(80, 120, None), slice(0, 40, None), slice(None, None, None))
+        ],
+        7: [
+            (slice(80, 120, None), slice(40, 60, None), slice(None, None, None)),
+            (slice(80, 120, None), slice(60, 80, None), slice(None, None, None))
+        ],
+        8: [(slice(80, 120, None), slice(80, 120, None), slice(None, None, None))]
+    }
+
+    d_regions = {
+        0: [
+            (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        ],
+        1:[
+            (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        ],
+        2: [
+            (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        ],
+        3: [
+            (slice(0, 20, None), slice(0, 40, None), slice(None, None, None)),
+            (slice(20, 40, None), slice(0, 40, None), slice(None, None, None))
+        ],
+        4: [
+            (slice(0, 20, None), slice(0, 20, None), slice(None, None, None)),
+            (slice(0, 20, None),  slice(20, 40, None),  slice(None, None, None)),
+            (slice(20, 40, None), slice(0, 40, None), slice(None, None, None))
+        ],
+        5: [
+            (slice(0, 20, None), slice(0, 40, None), slice(None, None, None)),
+            (slice(20, 40, None), slice(0, 40, None), slice(None, None, None))
+        ],
+        6: [
+            (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        ],
+        7: [
+            (slice(0, 40, None), slice(0, 20, None), slice(None, None, None)),
+            (slice(0, 40, None), slice(20, 40, None), slice(None, None, None))
+        ],
+        8: [
+            (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        ]
+    }
+
+    # test_arrays, _ = compute_zones(B, O, R, volumestokeep)
+    pass 

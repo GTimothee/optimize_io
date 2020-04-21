@@ -14,26 +14,26 @@ def get_main_volumes(B, T):
     """
     return [
         Volume(1,
-               (B[Axes.i], 0, T[Axes.k]),
-               (0, T[Axes.j], B[Axes.k])),
-        Volume(2,
-               (B[Axes.i], T[Axes.j], T[Axes.k]),
-               (0, B[Axes.j], B[Axes.k])),
-        Volume(3,
-               (T[Axes.i], T[Axes.j], 0),
-               (0, B[Axes.j], T[Axes.k])),
-        Volume(4,
-               (B[Axes.i], 0, 0),
-               (T[Axes.i], T[Axes.j], T[Axes.k])),
-        Volume(5,
-               (B[Axes.i], 0, T[Axes.k]),
+               (0,0,T[Axes.k]),
                (T[Axes.i], T[Axes.j], B[Axes.k])),
-        Volume(6,
-               (B[Axes.i], T[Axes.j], 0),
+        Volume(2,
+               (0, T[Axes.j], 0),
                (T[Axes.i], B[Axes.j], T[Axes.k])),
+        Volume(3,
+               (0, T[Axes.j], T[Axes.k]),
+               (T[Axes.i], B[Axes.j], B[Axes.k])),
+        Volume(4,
+               (T[Axes.i], 0, 0),
+               (B[Axes.i], T[Axes.j], T[Axes.k])),
+        Volume(5,
+               (T[Axes.i], 0, T[Axes.k]),
+               (B[Axes.i], T[Axes.j], B[Axes.k])),
+        Volume(6,
+               (T[Axes.i], T[Axes.j], 0),
+               (B[Axes.i], B[Axes.j], T[Axes.k])),
         Volume(7,
-               (B[Axes.i], T[Axes.j], T[Axes.k]),
-               (T[Axes.i], B[Axes.j], B[Axes.k]))]
+               (T[Axes.i], T[Axes.j], T[Axes.k]),
+               (B[Axes.i], B[Axes.j], B[Axes.k]))]
 
 
 def compute_hidden_volumes(T, O, volumes_list):
@@ -138,7 +138,7 @@ def get_arrays_dict(buff_to_vols, buffers, outfiles):
     return array_dict
 
 
-def merge_cached_volumes(arrays_dict):
+def merge_cached_volumes(arrays_dict, volumestokeep):
     """ V - Pour chaque output file, pour chaque volume, si le volume doit être kept alors fusionner
     """
     for outfileindex in array_dict.keys():
@@ -149,7 +149,7 @@ def merge_cached_volumes(arrays_dict):
         array_dict[outfileindex] = map_to_slices(volumes)
 
 
-def compute_zones(B, O, R):
+def compute_zones(B, O, R, volumestokeep):
     """ Main function of the module. Compute the "arrays" and "regions" dictionary for the resplit case.
 
     Arguments:
@@ -177,11 +177,12 @@ def compute_zones(B, O, R):
         buff_to_vols[buffer_index] = add_offsets(volumes_list, _3d_index, B)
 
     arrays_dict = get_arrays_dict(buff_to_vols, buffers, outfiles)  # create arrays_dict from buff_to_vols
-    merge_cached_volumes(arrays_dict)
+    merge_cached_volumes(arrays_dict, volumestokeep)
     clean_arrays_dict(arrays_dict)
 
-    regions_dict = deepcopy(array_dict)
-    offsets = get_offsets()
-    regions_dict = remove_offset(regions_dict, offsets)
+    regions_dict = dict()
+    # regions_dict = deepcopy(array_dict)
+    # offsets = get_offsets()
+    # regions_dict = remove_offset(regions_dict, offsets)
 
     return arrays_dict, regions_dict
