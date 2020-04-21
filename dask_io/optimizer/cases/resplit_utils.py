@@ -84,13 +84,13 @@ def get_crossed_outfiles(buffer_index, buffers, outfiles):
     Arguments: 
     ----------
         buffer_index: Integer indexing the buffer of interest in storage order.
-        buffers: list of volumes representing the buffers.
-        outfiles: list of volumes representing the output files.
+        buffers: dict of volumes representing the buffers, indexed in storage order.
+        outfiles: dict of volumes representing the output files, indexed in storage order.
     """
     crossing = list()
     buffer_of_interest = buffers[buffer_index]
-    for outfile in outfiles:
-        if hypercubes_overlap(buffer_of_interest.get_corners(), outfile.get_corners()):
+    for outfile in outfiles.values():
+        if hypercubes_overlap(buffer_of_interest, outfile):
             crossing.append(outfile)
     return crossing
 
