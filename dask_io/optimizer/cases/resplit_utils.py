@@ -1,3 +1,7 @@
+from enum import Enum
+import operator
+
+
 class Axes(Enum):
     i: 0
     j: 1
@@ -6,8 +10,8 @@ class Axes(Enum):
 
 class Volume:
     def __init__(self, index, p1, p2):
-        if not isinstance(p1, tuple) \ 
-            or not isinstance(p2, tuple):
+        if (not isinstance(p1, tuple) 
+            or not isinstance(p2, tuple)):
             raise TypeError()
 
         self.index = index
@@ -111,9 +115,9 @@ def included_in(volume, outfile):
 def add_to_array_dict(array_dict, outfile, volume):
     """ Add volume information to dictionary associating output file index to 
     """
-    if not isinstance(outfile.index, int) or \ 
-        not isinstance(volume, Volume) or \ 
-        not isinstance(outfile, Volume):
+    if (not isinstance(outfile.index, int) 
+        or not isinstance(volume, Volume) 
+        or not isinstance(outfile, Volume)):
         raise TypeError()
 
     if not outfile.index in array_dict.keys():
@@ -129,7 +133,34 @@ def convert_Volume_to_slices(v):
 
 
 def clean_arrays_dict(arrays_dict):
+    """ From a dictionary of Volumes, creates a dictionary of list of slices.
+    The new arrays_dict associates each output file to each volume that must be written at a time.
+    """
     for k in arrays_dict.keys():
         v = arrays_dict[k]
         slices = convert_Volume_to_slices(v)
-        arrays_dict(k) = v
+        arrays_dict[k] = v
+
+
+def get_named_volumes(blocks_partition, block_shape):
+    """ Return the coordinates of all entities of shape block shape in the reconstructed image.
+    The first entity is placed at the origin of the base.
+
+    Arguments: 
+    ----------
+        blocks_partition: Number of blocks in each dimension. Shape of the reconstructed image in terms of the blocks considered.
+        block_shape: shape of one block, all blocks having the same shape 
+    """
+    d = dict()
+    for i in range(blocks_partition[0]):
+        for j in range(blocks_partition[1]):
+            for k in range(blocks_partition[2]):
+                bl_corner = (block_shape[0] * i,
+                             block_shape[1] * j,
+                             block_shape[2] * k)
+                tr_corner = (block_shape[0] * (i+1),
+                             block_shape[1] * (j+1),
+                             block_shape[2] * (k+1))   
+                index = _3d_to_numeric_pos((i, j, k), block_shape, order='C')
+                d[index] = Volume(index, bl_corner, tr_corner)
+    return d

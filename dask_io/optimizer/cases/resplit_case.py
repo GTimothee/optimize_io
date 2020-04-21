@@ -1,5 +1,3 @@
-from enum import Enum
-import operator
 from dask_io.optimizer.utils.utils import numeric_to_3d_pos, _3d_to_numeric_pos
 from dask_io.optimizer.cases.resplit_utils import *
 
@@ -123,13 +121,13 @@ def add_offsets(volumes_list, _3d_index, B):
         volume.add_offset(offset)
 
 
-def get_array_dict(buff_to_vols, R, O):
+def get_arrays_dict(buff_to_vols, buffers, outfiles):
     """ IV - Assigner les volumes à tous les output files, en gardant référence du type de volume que c'est
     """
     array_dict = dict()
 
     for buffer_index, buffer_volumes in buff_to_vols.items():
-        crossed_outfiles = get_crossed_outfiles(buffer_index, R, O) # refine search
+        crossed_outfiles = get_crossed_outfiles(buffer_index, buffers, outfiles) # refine search
 
         for volume in buffer_volumes:
             for outfile in crossed_outfiles:
@@ -149,7 +147,6 @@ def merge_cached_volumes(arrays_dict):
             if volume.index in volumestokeep:
                 merge_volumes(volumes, volume.index)
         array_dict[outfileindex] = map_to_slices(volumes)
-    return
 
 
 def compute_zones(B, O, R):
@@ -161,13 +158,12 @@ def compute_zones(B, O, R):
         O: output file shape
         R: shape of reconstructed image
     """
-    buff_to_vols = dict()
     buffers_shape = get_blocks_shape(R, B)
-
-    # get buffers' corners
-    # get outfiles' corners
     outfiles_shape = get_blocks_shape(R, O)
+    buffers = get_named_volumes(buffers_shape, B)
+    outfiles = get_named_volumes(outfiles_shape, O)
 
+    buff_to_vols = dict()  # associate buffer to volumes contained in it
     for buffer_index in range(nb_buffers):
         _3d_index = numeric_to_3d_pos(buffer_index, buffers_shape, order='C') # to replace by order F, TODO refactor func
         T = list()
@@ -179,8 +175,8 @@ def compute_zones(B, O, R):
         hidden_volumes = compute_hidden_volumes(T, O, volumes_list)
         volumes_list = volumes_list + hidden_volumes
         buff_to_vols[buffer_index] = add_offsets(volumes_list, _3d_index, B)
-        
-    arrays_dict = get_array_dict(buff_to_vols, R, O)
+
+    arrays_dict = get_arrays_dict(buff_to_vols, buffers, outfiles)  # create arrays_dict from buff_to_vols
     merge_cached_volumes(arrays_dict)
     clean_arrays_dict(arrays_dict)
 
