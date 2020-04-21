@@ -21,3 +21,24 @@ def test_hypercubes_overlap():
     overlapping = Volume(None, (3,3,3), (8,8,8))
     assert hypercubes_overlap(hypercube1, non_overlapping) == False
     assert hypercubes_overlap(hypercube1, overlapping) == True
+
+
+def test_get_blocks_shape():
+    big_arrays = [
+        (10, 10, 10),
+        (24, 5, 50),
+        (100, 72, 16)
+    ]
+    small_arrays = [
+        (5, 2, 5),
+        (6, 5, 10),
+        (10, 9, 4)
+    ]
+    expected = [
+        (2, 5, 2),
+        (4, 1, 5),
+        (10, 8, 4)
+    ]
+
+    for big_array, small_array, blocks in zip(big_arrays, small_arrays, expected):
+        assert get_blocks_shape(big_array, small_array) == blocks
