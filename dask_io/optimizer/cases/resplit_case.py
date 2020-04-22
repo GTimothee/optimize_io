@@ -146,13 +146,12 @@ def add_offsets(volumes_list, _3d_index, B):
         volume.add_offset(offset)
 
 
-def get_arrays_dict(buff_to_vols, buffers, R, O):
+def get_arrays_dict(buff_to_vols, buffers, outfiles_volumes):
     """ IV - Assigner les volumes à tous les output files, en gardant référence du type de volume que c'est
     """
     array_dict = dict()
 
-    outfiles_partititon = get_blocks_shape(R, O)
-    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+    
 
     for buffer_index, buffer_volumes in buff_to_vols.items():
         crossed_outfiles = get_crossed_outfiles(buffer_index, buffers, outfiles_volumes) # refine search
@@ -242,15 +241,16 @@ def compute_zones(B, O, R, volumestokeep):
 
     # B/ Create arrays dict from buff_to_vols
     # arrays_dict associate each output file to parts of it to be stored at a time
-    arrays_dict = get_arrays_dict(buff_to_vols, buffers_volumes, R, O) 
+    outfiles_partititon = get_blocks_shape(R, O)
+    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+    arrays_dict = get_arrays_dict(buff_to_vols, buffers_volumes, outfiles_volumes) 
     merge_rules = get_merge_rules(volumestokeep)
     merge_cached_volumes(arrays_dict, merge_rules)
     clean_arrays_dict(arrays_dict)
 
     # C/ Create regions dict from arrays dict
     regions_dict = dict()
-    # regions_dict = deepcopy(array_dict)
-    # offsets = get_offsets()
+    regions_dict = copy.deepcopy(array_dict)
     # regions_dict = remove_offset(regions_dict, offsets)
 
     return arrays_dict, regions_dict

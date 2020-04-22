@@ -144,7 +144,9 @@ def test_get_dict():
         buff_to_vols[buffer_index] = volumes_list
 
     # test getarraydict
-    test_arrays = get_arrays_dict(buff_to_vols, buffers_volumes, R, O) 
+    outfiles_partititon = get_blocks_shape(R, O)
+    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+    test_arrays = get_arrays_dict(buff_to_vols, buffers_volumes, outfiles_volumes) 
     test_arrays_lengths = { k: len(v) for (k, v) in test_arrays.items()}
     expected = {
         0: 1,
