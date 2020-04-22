@@ -1,4 +1,4 @@
-import math
+import math, copy
 
 from dask_io.optimizer.utils.utils import numeric_to_3d_pos, _3d_to_numeric_pos
 from dask_io.optimizer.cases.resplit_utils import *
@@ -211,6 +211,38 @@ def get_merge_rules(volumestokeep):
     return rules
 
 
+def get_regions_dict(array_dict, outfiles_volumes):
+    """ Create regions dict from arrays dict by removing output file offset (low corner) from slices.
+    """
+    regions_dict = dict()
+    regions_dict = copy.deepcopy(array_dict)
+
+    slice_to_list = lambda s: [s.start, s.stop, s.step]
+    list_to_slice = lambda s: slice(s[0], s[1], s[2])
+
+    for v in outfiles_volumes.values():
+        p1 = v.p1 # (x, y, z)
+        outputfile_data = regions_dict[v.index]
+
+        for i in range(len(outputfile_data)):
+            slices_list = outputfile_data[i]
+            s1, s2, s3 = slices_list
+
+            s1 = slice_to_list(s1) # start, stop, step
+            s2 = slice_to_list(s2) # start, stop, step
+            s3 = slice_to_list(s3) # start, stop, step
+            slices_list = [s1, s2, s3]
+
+            for dim in range(3):
+                s = slices_list[dim]
+                s[0] -= p1[dim]
+                s[1] -= p1[dim]
+                slices_list[dim] = list_to_slice(s)
+
+            outputfile_data[i] = slices_list
+    return regions_dict
+
+
 def compute_zones(B, O, R, volumestokeep):
     """ Main function of the module. Compute the "arrays" and "regions" dictionary for the resplit case.
 
@@ -249,8 +281,6 @@ def compute_zones(B, O, R, volumestokeep):
     clean_arrays_dict(arrays_dict)
 
     # C/ Create regions dict from arrays dict
-    regions_dict = dict()
-    regions_dict = copy.deepcopy(array_dict)
-    # regions_dict = remove_offset(regions_dict, offsets)
+    regions_dict = get_regions_dict(array_dict, outfiles_volumes)
 
     return arrays_dict, regions_dict

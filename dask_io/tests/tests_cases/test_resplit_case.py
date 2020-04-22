@@ -52,58 +52,58 @@ def test_add_offset():
 
 
 d_arrays_expected = {
-    0: [(slice(0, 40, None), slice(0, 40, None), slice(None, None, None))],
-    1: [(slice(0, 40, None), slice(40, 80, None), slice(None, None, None))],
-    2: [(slice(0, 40, None), slice(80, 120, None), slice(None, None, None))],
-    3: [(slice(40, 60, None), slice(0, 40, None), slice(None, None, None)),
-        (slice(60, 80, None), slice(0, 40, None), slice(None, None, None))],
-    4: [(slice(40, 60, None), slice(40, 60, None), slice(None, None, None)),
-    (slice(40, 60, None), slice(60, 80, None), slice(None, None, None)),
-    (slice(60, 80, None), slice(40, 80, None), slice(None, None, None))],
-    5: [(slice(40, 60, None), slice(80, 120, None), slice(None, None, None)),
-        (slice(60, 80, None), slice(80, 120, None), slice(None, None, None))],
+    0: [(slice(0, 1, None), slice(0, 40, None), slice(0, 40, None))],
+    1: [(slice(0, 1, None), slice(0, 40, None), slice(40, 80, None))],
+    2: [(slice(0, 1, None), slice(0, 40, None), slice(80, 120, None))],
+    3: [(slice(0, 1, None), slice(40, 60, None), slice(0, 40, None)),
+        (slice(0, 1, None), slice(60, 80, None), slice(0, 40, None))],
+    4: [(slice(0, 1, None), slice(40, 60, None), slice(40, 60, None)),
+        (slice(0, 1, None), slice(40, 60, None), slice(60, 80, None)),
+        (slice(0, 1, None), slice(60, 80, None), slice(40, 80, None))],
+    5: [(slice(0, 1, None), slice(40, 60, None), slice(80, 120, None)),
+        (slice(0, 1, None), slice(60, 80, None), slice(80, 120, None))],
     6: [
-        (slice(80, 120, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(80, 120, None), slice(0, 40, None))
     ],
     7: [
-        (slice(80, 120, None), slice(40, 60, None), slice(None, None, None)),
-        (slice(80, 120, None), slice(60, 80, None), slice(None, None, None))
+        (slice(0, 1, None), slice(80, 120, None), slice(40, 60, None)),
+        (slice(0, 1, None), slice(80, 120, None), slice(60, 80, None))
     ],
-    8: [(slice(80, 120, None), slice(80, 120, None), slice(None, None, None))]
+    8: [(slice(0, 1, None), slice(80, 120, None), slice(80, 120, None))]
 }
 
 d_regions_expected = {
     0: [
-        (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 40, None), slice(0, 40, None))
     ],
     1:[
-        (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 40, None), slice(0, 40, None))
     ],
     2: [
-        (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 40, None), slice(0, 40, None))
     ],
     3: [
-        (slice(0, 20, None), slice(0, 40, None), slice(None, None, None)),
-        (slice(20, 40, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 20, None), slice(0, 40, None)),
+        (slice(0, 1, None), slice(20, 40, None), slice(0, 40, None))
     ],
     4: [
-        (slice(0, 20, None), slice(0, 20, None), slice(None, None, None)),
-        (slice(0, 20, None),  slice(20, 40, None),  slice(None, None, None)),
-        (slice(20, 40, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 20, None), slice(0, 20, None)),
+        (slice(0, 1, None), slice(0, 20, None),  slice(20, 40, None)),
+        (slice(0, 1, None), slice(20, 40, None), slice(0, 40, None))
     ],
     5: [
-        (slice(0, 20, None), slice(0, 40, None), slice(None, None, None)),
-        (slice(20, 40, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 20, None), slice(0, 40, None)),
+        (slice(0, 1, None), slice(20, 40, None), slice(0, 40, None))
     ],
     6: [
-        (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 40, None), slice(0, 40, None))
     ],
     7: [
-        (slice(0, 40, None), slice(0, 20, None), slice(None, None, None)),
-        (slice(0, 40, None), slice(20, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 40, None), slice(0, 20, None)),
+        (slice(0, 1, None), slice(0, 40, None), slice(20, 40, None))
     ],
     8: [
-        (slice(0, 40, None), slice(0, 40, None), slice(None, None, None))
+        (slice(0, 1, None), slice(0, 40, None), slice(0, 40, None))
     ]
 }
 
@@ -189,6 +189,7 @@ def test_get_dict():
     for k, v in expected.items():
         assert test_arrays_lengths[k] == v
 
+    # array cleaning
     clean_arrays_dict(test_arrays)
     for k, s_list in d_arrays_expected.items():
         s_list2 = test_arrays[k]
@@ -200,6 +201,14 @@ def test_get_dict():
         
     logger.debug("-------------RESULT")
     logger.debug(test_arrays)
+
+    # regions dict
+    regions_dict = get_regions_dict(test_arrays, outfiles_volumes)
+    logger.debug("-------------REGIONS DICT")
+    for k, s_list in regions_dict.items():
+        logger.debug("Output file: %s", k)
+        for e in s_list:
+            logger.debug("- %s", e)
 
 
 def test_get_volumes():
