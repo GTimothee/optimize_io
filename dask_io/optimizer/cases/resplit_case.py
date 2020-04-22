@@ -14,16 +14,28 @@ def get_main_volumes(B, T):
         B: buffer shape
         T: Theta prime shape -> Theta value for C_x(n) (see paper)
     """
-    return [
+    logger.debug("B: %s", B)
+    logger.debug("T: %s", T)
+
+    main_volumes = [
         Volume(1,
                (0,0,T[Axes.k.value]),
-               (T[Axes.i.value], T[Axes.j.value], B[Axes.k.value])),
-        Volume(2,
+               (T[Axes.i.value], T[Axes.j.value], B[Axes.k.value]))]
+    
+    if B[Axes.j.value] == T[Axes.j.value]:
+        return main_volumes
+
+    main_volumes.append(Volume(2,
                (0, T[Axes.j.value], 0),
-               (T[Axes.i.value], B[Axes.j.value], T[Axes.k.value])),
-        Volume(3,
+               (T[Axes.i.value], B[Axes.j.value], T[Axes.k.value])))
+    main_volumes.append(Volume(3,
                (0, T[Axes.j.value], T[Axes.k.value]),
-               (T[Axes.i.value], B[Axes.j.value], B[Axes.k.value])),
+               (T[Axes.i.value], B[Axes.j.value], B[Axes.k.value])))
+    
+    if B[Axes.i.value] == T[Axes.i.value]:
+        return main_volumes
+
+    bottom_volumes = [
         Volume(4,
                (T[Axes.i.value], 0, 0),
                (B[Axes.i.value], T[Axes.j.value], T[Axes.k.value])),
@@ -35,7 +47,9 @@ def get_main_volumes(B, T):
                (B[Axes.i.value], B[Axes.j.value], T[Axes.k.value])),
         Volume(7,
                (T[Axes.i.value], T[Axes.j.value], T[Axes.k.value]),
-               (B[Axes.i.value], B[Axes.j.value], B[Axes.k.value]))]
+               (B[Axes.i.value], B[Axes.j.value], B[Axes.k.value]))
+    ]
+    return main_volumes + bottom_volumes
 
 
 def compute_hidden_volumes(T, O):
@@ -157,12 +171,23 @@ def merge_cached_volumes(arrays_dict, merge_rules):
     """
     for outfileindex in arrays_dict.keys():
         volumes = arrays_dict[outfileindex]
-        for i in range(len(volumes)):
-            volume = volumes[i]
-            if volume.index in merge_rules.keys():
-                merge_directions = merge_rules[volume.index]
-                new_volume = apply_merge(volume, volumes, merge_directions)
-                volumes[i] = new_volume
+        
+
+        for voltomerge_index in merge_rules.keys():
+            for i in range(len(volumes)):
+                if volumes[i].index == voltomerge_index:
+                    logger.debug("nb volumes for outfile %s: %s", outfileindex, len(volumes))
+                    logger.debug("merging volume %s", voltomerge_index)
+                    volumetomerge = volumes.pop(i)
+                    logger.debug("POP nb volumes for outfile %s: %s", outfileindex, len(volumes))
+                    merge_directions = merge_rules[volumetomerge.index]
+                    new_volume = apply_merge(volumetomerge, volumes, merge_directions)
+                    logger.debug("BEFORE ADD NEW nb volumes for outfile %s: %s", outfileindex, len(volumes))
+                    volumes.append(new_volume)
+                    logger.debug("AFTER ADD NEW nb volumes for outfile %s: %s", outfileindex, len(volumes))
+                    break
+
+        arrays_dict[outfileindex] = volumes
 
 
 def get_merge_rules(volumestokeep):
@@ -206,7 +231,9 @@ def compute_zones(B, O, R, volumestokeep):
         
         T = list()
         for dim in range(len(buffers_volumes[buffer_index].p1)):
-            C = (_3d_index[dim] * B[dim]) % O[dim]
+            C = ((_3d_index[dim]+1) * B[dim]) % O[dim]
+            if C == 0 and B[dim] != O[dim]:  # particular case
+                C = O[dim]
             T.append(B[dim] - C)
         volumes_list = get_main_volumes(B, T)  # get coords in basis of buffer
         volumes_list = volumes_list + compute_hidden_volumes(T, O)  # still in basis of buffer

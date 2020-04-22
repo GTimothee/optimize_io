@@ -52,6 +52,9 @@ class Volume:
             return False 
         return True
 
+    def print(self):
+        logger.debug("Volume name: %s, p1: %s, p2: %s", self.index, self.p1, self.p2)
+
 
 def hypercubes_overlap(hypercube1, hypercube2):
     """ Evaluate if two hypercubes cross each other.
@@ -196,6 +199,13 @@ def apply_merge(volume, volumes, merge_directions):
         merge_directions: indicates neighbours to merge with
     """
     
+    def get_new_volume(volume, lowcorner):
+        v2 = get_volume(lowcorner)
+        if v2 != None:
+            return merge_volumes(volume, v2)
+        else:
+            return volume
+
     def get_volume(lowcorner):
         if not isinstance(lowcorner, tuple):
             raise TypeError()  # required for "=="
@@ -205,7 +215,9 @@ def apply_merge(volume, volumes, merge_directions):
             if v.p1 == lowcorner:
                 logger.debug("merging volume with low corner %s", v.p1)
                 return volumes.pop(i)
-        raise ValueError()
+        
+        logger.warning("No volume to merge with")
+        return None
 
     import copy
 
@@ -216,20 +228,17 @@ def apply_merge(volume, volumes, merge_directions):
         if Axes.k in merge_directions:
             p1_target = list(copy.deepcopy(p1))
             p1_target[Axes.k.value] = p2[Axes.k.value]
-            v2 = get_volume(tuple(p1_target))
-            new_volume = merge_volumes(volume, v2)
+            new_volume = get_new_volume(volume, tuple(p1_target))
 
         elif Axes.j in merge_directions:
             p1_target = list(copy.deepcopy(p1))
             p1_target[Axes.j.value] = p2[Axes.j.value]
-            v2 = get_volume(tuple(p1_target))
-            new_volume = merge_volumes(volume, v2)
+            new_volume = get_new_volume(volume, tuple(p1_target))
 
         elif Axes.i in merge_directions:
             p1_target = list(copy.deepcopy(p1))
             p1_target[Axes.i.value] = p2[Axes.i.value]
-            v2 = get_volume(tuple(p1_target))
-            new_volume = merge_volumes(volume, v2)
+            new_volume = get_new_volume(volume, tuple(p1_target))
 
     elif len(merge_directions) == 2:
         logger.debug("merge directions: %s", merge_directions)
@@ -237,7 +246,7 @@ def apply_merge(volume, volumes, merge_directions):
 
         p1_target = list(copy.deepcopy(p1))
         p1_target[axis1.value] = p2[axis1.value]
-        volume_axis1 = get_volume(tuple(p1_target))
+        volume_axis1 = get_new_volume(volume, tuple(p1_target))
 
         new_volume_axis1 = apply_merge(volume_axis1, volumes, [axis2])
         new_volume_axis2 = apply_merge(volume, volumes, [axis2])
@@ -249,7 +258,7 @@ def apply_merge(volume, volumes, merge_directions):
         
         p1_target = list(copy.deepcopy(p1))
         p1_target[axis1.value] = p2[axis1.value]
-        volume_axis1 = get_volume(tuple(p1_target))
+        volume_axis1 = get_new_volume(volume, tuple(p1_target))
 
         new_vol1 = apply_merge(volume, volumes, [axis2, axis3])
         new_vol2 = apply_merge(volume_axis1, volumes, [axis2, axis3])
