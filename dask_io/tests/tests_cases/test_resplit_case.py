@@ -173,10 +173,10 @@ def test_get_dict():
 
     expected = {
         0: 1,
-        1: 1, # << 
+        1: 1, # << modified 
         2: 1,
         3: 2,
-        4: 3, # << 
+        4: 3, # << modified
         5: 2, 
         6: 1, 
         7: 2, 
@@ -191,13 +191,15 @@ def test_get_dict():
 
     # array cleaning
     clean_arrays_dict(test_arrays)
-    for k, s_list in d_arrays_expected.items():
-        s_list2 = test_arrays[k]
-        s_list = list(map(lambda e: str(e), s_list))
-        s_list2 = list(map(lambda e: str(e), s_list))
-        for e in s_list:
+    for outputfile_key, expected_array_list in d_arrays_expected.items():
+        arrays_list = test_arrays[outputfile_key]
+
+        expected_array_list = list(map(lambda e: str(e), expected_array_list))
+        arrays_list = list(map(lambda e: str(e), arrays_list))
+
+        for e in expected_array_list:
             logger.debug("e:%s", e)
-            assert e in s_list2  # TODO: does not work
+            assert e in arrays_list  
         
     logger.debug("-------------RESULT")
     logger.debug(test_arrays)
