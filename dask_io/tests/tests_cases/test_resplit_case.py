@@ -181,10 +181,10 @@ def test_merge_cached_volumes():
     buff_to_vols = get_buff_to_vols(R, B, O, buffers_volumes, buffers_partition)
     test_arrays = get_arrays_dict(buff_to_vols, buffers_volumes, outfiles_volumes) 
 
-    # test merge
+    # do the merge
     merge_cached_volumes(test_arrays, volumes_to_keep_test)
-    test_arrays_lengths = { k: len(v) for (k, v) in test_arrays.items()}
-
+    
+    # assert
     expected = {
         0: 1,
         1: 1, # << modified 
@@ -196,15 +196,32 @@ def test_merge_cached_volumes():
         7: 2, 
         8: 1
     }
-
-    logger.debug("----------After merge:")
-    neat_print(test_arrays)
-
+    test_arrays_lengths = { k: len(v) for (k, v) in test_arrays.items()}
+    # logger.debug("----------After merge:")
+    # neat_print(test_arrays)
     for k, v in expected.items():
         assert test_arrays_lengths[k] == v
 
-    # array cleaning
+
+def test_clean_arrays_dict():
+    # prep case
+    R = R_test 
+    B = B_test 
+    O = O_test 
+    buffers_partition = get_blocks_shape(R, B)
+    buffers_volumes = get_named_volumes(buffers_partition, B)
+    outfiles_partititon = get_blocks_shape(R, O)
+    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+    buff_to_vols = get_buff_to_vols(R, B, O, buffers_volumes, buffers_partition)
+    test_arrays = get_arrays_dict(buff_to_vols, buffers_volumes, outfiles_volumes) 
+    merge_cached_volumes(test_arrays, volumes_to_keep_test)
+
+    # do the clean
     clean_arrays_dict(test_arrays)
+
+    # assert
+    # logger.debug("----------After cleaning:")
+    # logger.debug(test_arrays)
     for outputfile_key, expected_array_list in d_arrays_expected.items():
         arrays_list = test_arrays[outputfile_key]
 
@@ -212,19 +229,25 @@ def test_merge_cached_volumes():
         arrays_list = list(map(lambda e: str(e), arrays_list))
 
         for e in expected_array_list:
-            logger.debug("e:%s", e)
             assert e in arrays_list  
-        
-    logger.debug("-------------RESULT")
-    logger.debug(test_arrays)
 
-    # regions dict
-    regions_dict = get_regions_dict(test_arrays, outfiles_volumes)
-    logger.debug("-------------REGIONS DICT")
-    for k, s_list in regions_dict.items():
-        logger.debug("Output file: %s", k)
-        for e in s_list:
-            logger.debug("- %s", e)
+
+def test_regions_dict():
+    """ Given arrays_dict, does this function return the good regions_dict
+    """
+    R = R_test 
+    O = O_test 
+    outfiles_partititon = get_blocks_shape(R, O)
+    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+
+    regions_dict = get_regions_dict(d_arrays_expected, outfiles_volumes)
+    for outputfile_key, expected_regions_list in regions_dict.items():
+        regions_list = regions_dict[outputfile_key]
+        expected_regions_list = list(map(lambda e: str(e), expected_regions_list))
+        regions_list = list(map(lambda e: str(e), regions_list))
+
+        for e in expected_regions_list:
+            assert e in regions_list  
 
 
 def test_get_volumes():
