@@ -113,39 +113,41 @@ O_test = (1,40,40)
 volumes_to_keep_test = [1]
 
 
-def test_get_dict():
-    """ test getbufftovols and getarraydict
+def neat_print(d):
+    """ Utility function, not a test. Print a dict of Volumes.
     """
-    def neat_print(d):
-        for k, v in d.items():
-            logger.debug("----output file: %s", k)
-            for e in v:
-                e.print()
-                
+    for k, v in d.items():
+        logger.debug("----output file: %s", k)
+        for e in v:
+            e.print()
+
+
+def test_get_buff_to_vols():
     R = R_test 
     B = B_test 
     O = O_test 
 
-    buff_to_vols = dict()
     buffers_partition = get_blocks_shape(R, B)
     buffers_volumes = get_named_volumes(buffers_partition, B)
-    for buffer_index in buffers_volumes.keys():
-        _3d_index = numeric_to_3d_pos(buffer_index, buffers_partition, order='F')
-        
-        T = list()
-        for dim in range(len(buffers_volumes[buffer_index].p1)):
-            C = ((_3d_index[dim]+1) * B[dim]) % O[dim]
-            if C == 0 and B[dim] != O[dim]:
-                C = O[dim]
-            T.append(B[dim] - C)
-        volumes_list = get_main_volumes(B, T)  # get coords in basis of buffer
-        volumes_list = volumes_list + compute_hidden_volumes(T, O)  # still in basis of buffer
-        add_offsets(volumes_list, _3d_index, B)  # convert coords in basis of R
-        buff_to_vols[buffer_index] = volumes_list
-
-    # test getarraydict
     outfiles_partititon = get_blocks_shape(R, O)
     outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+    buff_to_vols = get_buff_to_vols(R, B, O, buffers_volumes, buffers_partition)
+    # TODO: asserts
+
+
+def test_get_dirty_arrays_dict():
+    """ by dirty we mean not cleaned -> see clean function
+    """                
+    R = R_test 
+    B = B_test 
+    O = O_test 
+
+    buffers_partition = get_blocks_shape(R, B)
+    buffers_volumes = get_named_volumes(buffers_partition, B)
+    outfiles_partititon = get_blocks_shape(R, O)
+    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+    buff_to_vols = get_buff_to_vols(R, B, O, buffers_volumes, buffers_partition)
+    
     test_arrays = get_arrays_dict(buff_to_vols, buffers_volumes, outfiles_volumes) 
     test_arrays_lengths = { k: len(v) for (k, v) in test_arrays.items()}
     expected = {
@@ -166,9 +168,21 @@ def test_get_dict():
     for k, v in expected.items():
         assert test_arrays_lengths[k] == v
 
+
+def test_merge_cached_volumes():
+    # prep case
+    R = R_test 
+    B = B_test 
+    O = O_test 
+    buffers_partition = get_blocks_shape(R, B)
+    buffers_volumes = get_named_volumes(buffers_partition, B)
+    outfiles_partititon = get_blocks_shape(R, O)
+    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+    buff_to_vols = get_buff_to_vols(R, B, O, buffers_volumes, buffers_partition)
+    test_arrays = get_arrays_dict(buff_to_vols, buffers_volumes, outfiles_volumes) 
+
     # test merge
-    merge_rules = get_merge_rules(volumes_to_keep_test)
-    merge_cached_volumes(test_arrays, merge_rules)
+    merge_cached_volumes(test_arrays, volumes_to_keep_test)
     test_arrays_lengths = { k: len(v) for (k, v) in test_arrays.items()}
 
     expected = {

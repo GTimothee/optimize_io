@@ -165,13 +165,14 @@ def get_arrays_dict(buff_to_vols, buffers, outfiles_volumes):
     return array_dict
 
 
-def merge_cached_volumes(arrays_dict, merge_rules):
+def merge_cached_volumes(arrays_dict, volumestokeep):
     """ V - Pour chaque output file, pour chaque volume, si le volume doit être kept alors fusionner
     """
+    merge_rules = get_merge_rules(volumestokeep)
+
     for outfileindex in arrays_dict.keys():
         volumes = arrays_dict[outfileindex]
         
-
         for voltomerge_index in merge_rules.keys():
             for i in range(len(volumes)):
                 if volumes[i].index == voltomerge_index:
@@ -243,20 +244,11 @@ def get_regions_dict(array_dict, outfiles_volumes):
     return regions_dict
 
 
-def compute_zones(B, O, R, volumestokeep):
-    """ Main function of the module. Compute the "arrays" and "regions" dictionary for the resplit case.
-
-    Arguments:
-    ----------
-        B: buffer shape
-        O: output file shape
-        R: shape of reconstructed image
-        volumestokeep: volumes to be kept by keep strategy
+def get_buff_to_vols(R, B, O, buffers_volumes, buffers_partition):
+    """ Outputs a dictionary associating buffer_index to list of Volumes indexed as in paper.
     """
-    # A/ associate each buffer to volumes contained in it
     buff_to_vols = dict()
-    buffers_partition = get_blocks_shape(R, B)
-    buffers_volumes = get_named_volumes(buffers_partition, B)
+    
     for buffer_index in buffers_volumes.keys():
         _3d_index = numeric_to_3d_pos(buffer_index, buffers_partition, order='F')
         
@@ -270,14 +262,31 @@ def compute_zones(B, O, R, volumestokeep):
         volumes_list = volumes_list + compute_hidden_volumes(T, O)  # still in basis of buffer
         add_offsets(volumes_list, _3d_index, B)  # convert coords in basis of R
         buff_to_vols[buffer_index] = volumes_list
+    return buff_to_vols
+
+
+def compute_zones(B, O, R, volumestokeep):
+    """ Main function of the module. Compute the "arrays" and "regions" dictionary for the resplit case.
+
+    Arguments:
+    ----------
+        B: buffer shape
+        O: output file shape
+        R: shape of reconstructed image
+        volumestokeep: volumes to be kept by keep strategy
+    """
+    buffers_partition = get_blocks_shape(R, B)
+    buffers_volumes = get_named_volumes(buffers_partition, B)
+    outfiles_partititon = get_blocks_shape(R, O)
+    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
+
+     # A/ associate each buffer to volumes contained in it
+    buff_to_vols = get_buff_to_vols(R, B, O, buffers_volumes, buffers_partition)
 
     # B/ Create arrays dict from buff_to_vols
     # arrays_dict associate each output file to parts of it to be stored at a time
-    outfiles_partititon = get_blocks_shape(R, O)
-    outfiles_volumes = get_named_volumes(outfiles_partititon, O)
     arrays_dict = get_arrays_dict(buff_to_vols, buffers_volumes, outfiles_volumes) 
-    merge_rules = get_merge_rules(volumestokeep)
-    merge_cached_volumes(arrays_dict, merge_rules)
+    merge_cached_volumes(arrays_dict, volumestokeep)
     clean_arrays_dict(arrays_dict)
 
     # C/ Create regions dict from arrays dict
