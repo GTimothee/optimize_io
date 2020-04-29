@@ -290,6 +290,6 @@ def compute_zones(B, O, R, volumestokeep):
     clean_arrays_dict(arrays_dict)
 
     # C/ Create regions dict from arrays dict
-    regions_dict = get_regions_dict(array_dict, outfiles_volumes)
+    regions_dict = get_regions_dict(arrays_dict, outfiles_volumes)
 
     return arrays_dict, regions_dict

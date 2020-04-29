@@ -1,5 +1,6 @@
 import numpy as np
 import operator
+import pytest
 
 from dask_io.optimizer.cases.resplit_utils import Volume
 from dask_io.optimizer.cases.resplit_case import *
@@ -218,8 +219,6 @@ def test_clean_arrays_dict():
 
     # do the clean
     clean_arrays_dict(test_arrays)
-
-    # assert
     # logger.debug("----------After cleaning:")
     # logger.debug(test_arrays)
     for outputfile_key, expected_array_list in d_arrays_expected.items():
@@ -281,3 +280,20 @@ def test_get_volumes():
 
         hidden = compute_hidden_volumes(T, O)
         assert len(hidden) == 1
+
+
+@pytest.fixture(autouse=True)
+def get_BOR_cases():
+    import json, os
+    l = __file__.split('/')[:-1]
+    with open(os.path.join('/', *l, 'BOR_test_cases.json')) as f:
+        pytest.BOR_dict = json.load(f)
+
+
+def test_compute_zones():
+    for k, v in pytest.BOR_dict.items():
+        BOIR = v['B'], v['O'], v['I'], v['R']
+        BOIR = list(map(lambda l: tuple(l), BOIR))
+        B, O, _, R = BOIR
+        volumestokeep = v['keep']
+        arrays_dict, regions_dict = compute_zones(B, O, R, volumestokeep)
