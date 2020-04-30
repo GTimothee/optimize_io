@@ -1,6 +1,7 @@
 import numpy as np
 import operator
 import pytest
+import json, os
 
 from dask_io.optimizer.cases.resplit_utils import Volume
 from dask_io.optimizer.cases.resplit_case import *
@@ -284,16 +285,59 @@ def test_get_volumes():
 
 @pytest.fixture(autouse=True)
 def get_BOR_cases():
-    import json, os
+    def convert_groundtruth_dict(groundtruth_arraysdict):
+        for caseindex in groundtruth_arraysdict.keys():
+            caseindex = str(caseindex)
+            logger.debug("case n°%s", caseindex)
+            outputfile_dict = groundtruth_arraysdict[caseindex]
+
+            for outputfilekey in outputfile_dict.keys():
+                outputfilekey = str(outputfilekey)
+                logger.debug("output file n°%s", outputfilekey)
+                list_of_lists = outputfile_dict[outputfilekey]
+
+                for listindex in range(len(list_of_lists)):
+                    _list = list_of_lists[listindex]
+                    logger.debug("processing list: %s", _list)
+                    
+                    l1, l2, l3 = _list[0:2], _list[2:4], _list[4:6]
+                    logger.debug("%s", slice(l1[0], l1[1], None))   
+
+                    s1 = slice(l1[0], l1[1], None)
+                    s2 = slice(l2[0], l2[1], None)
+                    s3 = slice(l3[0], l3[1], None)
+                    
+                    list_of_lists[listindex] = (s1, s2, s3)
+                outputfile_dict[outputfilekey] = list_of_lists
+            groundtruth_arraysdict[caseindex] = outputfile_dict
+        return groundtruth_arraysdict
+
     l = __file__.split('/')[:-1]
     with open(os.path.join('/', *l, 'BOR_test_cases.json')) as f:
-        pytest.BOR_dict = json.load(f)
+        pytest.BOR_cases_dict = json.load(f)
+    
+    with open(os.path.join('/', *l, 'BOR_arrays_dicts.json')) as f:
+        groundtruth_arraysdict = json.load(f)
+        pytest.BOR_arrays_dict = convert_groundtruth_dict(groundtruth_arraysdict)
 
 
 def test_compute_zones():
-    for k, v in pytest.BOR_dict.items():
+
+    for caseindex, v in pytest.BOR_cases_dict.items():
         BOIR = v['B'], v['O'], v['I'], v['R']
         BOIR = list(map(lambda l: tuple(l), BOIR))
         B, O, _, R = BOIR
         volumestokeep = v['keep']
+
         arrays_dict, regions_dict = compute_zones(B, O, R, volumestokeep)
+        groundtruth_arraysdict = pytest.BOR_arrays_dict[caseindex]
+
+        for outputfilekey in groundtruth_arraysdict.keys():
+            expected_array_list = groundtruth_arraysdict[outputfilekey]
+            expected_array_list = list(map(lambda e: str(e), expected_array_list))
+
+            arrays_list = arrays_dict[int(outputfilekey)]
+            arrays_list = list(map(lambda e: str(e), arrays_list))
+
+            # for e in expected_array_list:
+            #     assert e in arrays_list  
