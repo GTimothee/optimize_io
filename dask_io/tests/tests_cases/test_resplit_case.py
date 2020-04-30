@@ -323,39 +323,37 @@ def get_BOR_cases():
 
 def test_compute_zones():
 
-    # for caseindex, v in pytest.BOR_cases_dict.items():
-    caseindex = "3"
-    v = pytest.BOR_cases_dict[caseindex]
+    for caseindex in range(0,4): # pytest.BOR_cases_dict.keys():
+        caseindex = str(caseindex)
+        v = pytest.BOR_cases_dict[caseindex]
+        logger.debug("Treating case %s", caseindex)
 
+        BOIR = v['B'], v['O'], v['I'], v['R']
+        BOIR = list(map(lambda l: tuple(l), BOIR))
+        B, O, _, R = BOIR
+        volumestokeep = v['keep']
 
-    logger.debug("Treating case %s", caseindex)
+        arrays_dict, regions_dict = compute_zones(B, O, R, volumestokeep)
+        groundtruth_arraysdict = pytest.BOR_arrays_dict[caseindex]
 
-    BOIR = v['B'], v['O'], v['I'], v['R']
-    BOIR = list(map(lambda l: tuple(l), BOIR))
-    B, O, _, R = BOIR
-    volumestokeep = v['keep']
+        for outputfilekey in groundtruth_arraysdict.keys():
+            logger.debug("Outfilekey treated: %s", outputfilekey)
 
-    arrays_dict, regions_dict = compute_zones(B, O, R, volumestokeep)
-    groundtruth_arraysdict = pytest.BOR_arrays_dict[caseindex]
+            expected_array_list = groundtruth_arraysdict[outputfilekey]
+            expected_array_list = list(map(lambda e: str(e), expected_array_list))
 
-    for outputfilekey in groundtruth_arraysdict.keys():
-        logger.debug("Outfilekey treated: %s", outputfilekey)
+            arrays_list = arrays_dict[int(outputfilekey)]
+            arrays_list = list(map(lambda e: str(e), arrays_list))
 
-        expected_array_list = groundtruth_arraysdict[outputfilekey]
-        expected_array_list = list(map(lambda e: str(e), expected_array_list))
+            logger.debug("Expected:")
+            for l in expected_array_list:
+                logger.debug("%s", l)
 
-        arrays_list = arrays_dict[int(outputfilekey)]
-        arrays_list = list(map(lambda e: str(e), arrays_list))
+            logger.debug("Got:")
+            for l in arrays_list:
+                logger.debug("%s", l)
 
-        logger.debug("Expected:")
-        for l in expected_array_list:
-            logger.debug("%s", l)
-
-        logger.debug("Got:")
-        for l in arrays_list:
-            logger.debug("%s", l)
-
-        for e in expected_array_list:
-            assert e in arrays_list  
+            for e in expected_array_list:
+                assert e in arrays_list  
     
     
