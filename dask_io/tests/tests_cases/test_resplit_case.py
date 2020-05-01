@@ -257,6 +257,8 @@ def test_get_volumes():
     B = (1,60,60)
     O = (1,40,40)
     
+    logger.debug("FUNCTION test_get_volumes ---")
+
     from dask_io.optimizer.utils.utils import numeric_to_3d_pos
     from dask_io.optimizer.cases.resplit_utils import get_blocks_shape
 
@@ -286,6 +288,8 @@ def test_get_volumes():
 @pytest.fixture(autouse=True)
 def get_BOR_cases():
     def convert_groundtruth_dict(groundtruth_arraysdict):
+        logger.debug("FUNCTION convert_groundtruth_dict ---")
+
         for caseindex in groundtruth_arraysdict.keys():
             caseindex = str(caseindex)
             logger.debug("case n°%s", caseindex)
@@ -322,6 +326,7 @@ def get_BOR_cases():
 
 
 def test_compute_zones():
+    logger.debug("FUNCTION test_compute_zones ---")
 
     for caseindex in range(0,4): # pytest.BOR_cases_dict.keys():
         caseindex = str(caseindex)

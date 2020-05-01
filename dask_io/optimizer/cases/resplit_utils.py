@@ -4,6 +4,7 @@ import operator
 from dask_io.optimizer.utils.utils import _3d_to_numeric_pos
 
 import logging 
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class Axes(Enum):
@@ -53,7 +54,7 @@ class Volume:
         return True
 
     def print(self):
-        logger.debug("Volume name: %s, p1: %s, p2: %s", self.index, self.p1, self.p2)
+        logger.debug("\tVolume name: %s, p1: %s, p2: %s", self.index, self.p1, self.p2)
 
 
 def hypercubes_overlap(hypercube1, hypercube2):
@@ -171,8 +172,10 @@ def get_named_volumes(blocks_partition, block_shape):
         blocks_partition: Number of blocks in each dimension. Shape of the reconstructed image in terms of the blocks considered.
         block_shape: shape of one block, all blocks having the same shape 
     """
+    logger.debug("== Function == get_named_volumes")
     d = dict()
-    logger.debug("blocks_partition: %s", blocks_partition)
+    logger.debug("[Arg] blocks_partition: %s", blocks_partition)
+    logger.debug("[Arg] block_shape: %s", block_shape)
     for i in range(blocks_partition[0]):
         for j in range(blocks_partition[1]):
             for k in range(blocks_partition[2]):
@@ -182,10 +185,10 @@ def get_named_volumes(blocks_partition, block_shape):
                 tr_corner = (block_shape[0] * (i+1),
                              block_shape[1] * (j+1),
                              block_shape[2] * (k+1))   
-                logger.debug("in 3dtonumericpos: %s, %s", (i, j, k), block_shape)
                 index = _3d_to_numeric_pos((i, j, k), blocks_partition, order='F')
                 d[index] = Volume(index, bl_corner, tr_corner)
-    logger.debug("keys: %s", d.keys())
+    logger.debug("Indices of names volumes found: %s", d.keys())
+    logger.debug("End\n")
     return d
 
 
@@ -213,16 +216,18 @@ def apply_merge(volume, volumes, merge_directions):
         for i in range(len(volumes)):
             v = volumes[i]
             if v.p1 == lowcorner:
-                logger.debug("merging volume with low corner %s", v.p1)
+                logger.debug("\tMerging volume with low corner %s", v.p1)
                 return volumes.pop(i)
         
-        logger.warning("No volume to merge with")
+        logger.warning("\tNo volume to merge with")
         return None
 
     import copy
 
+    logger.debug("\t== Function == apply_merge")
+
     p1, p2 = volume.get_corners()
-    logger.debug("targetting volume with low corner %s", p1)
+    logger.debug("\tTargetting volume with low corner %s", p1)
 
     if len(merge_directions) == 1:
         if Axes.k in merge_directions:
@@ -241,7 +246,7 @@ def apply_merge(volume, volumes, merge_directions):
             new_volume = get_new_volume(volume, tuple(p1_target))
 
     elif len(merge_directions) == 2:
-        logger.debug("merge directions: %s", merge_directions)
+        logger.debug("\tMerge directions: %s", merge_directions)
         axis1, axis2 = merge_directions
 
         p1_target = list(copy.deepcopy(p1))
@@ -253,7 +258,7 @@ def apply_merge(volume, volumes, merge_directions):
         new_volume = merge_volumes(new_volume_axis1, new_volume_axis2)
 
     elif len(merge_directions) == 3:
-        logger.debug("merge directions %s", merge_directions)
+        logger.debug("\tMerge directions %s", merge_directions)
         axis1, axis2, axis3 = merge_directions
         
         p1_target = list(copy.deepcopy(p1))
@@ -266,4 +271,6 @@ def apply_merge(volume, volumes, merge_directions):
 
     else:
         raise ValueError()
+
+    logger.debug("\tEnd")
     return new_volume
