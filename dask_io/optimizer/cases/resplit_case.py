@@ -247,7 +247,7 @@ def get_regions_dict(array_dict, outfiles_volumes):
                 s[1] -= p1[dim]
                 slices_list[dim] = list_to_slice(s)
 
-            outputfile_data[i] = slices_list
+            outputfile_data[i] = tuple(slices_list)
     return regions_dict
 
 
