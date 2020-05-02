@@ -235,6 +235,7 @@ def test_clean_arrays_dict():
 def test_regions_dict():
     """ Given arrays_dict, does this function return the good regions_dict
     """
+    logger.debug("== Function == test_regions_dict")
     R = R_test 
     O = O_test 
     outfiles_partititon = get_blocks_shape(R, O)
@@ -245,6 +246,11 @@ def test_regions_dict():
         regions_list = regions_dict[outputfile_key]
         expected_regions_list = list(map(lambda e: str(e), expected_regions_list))
         regions_list = list(map(lambda e: str(e), regions_list))
+
+        logger.debug("Outfile n°%s", outputfile_key)
+        logger.debug("Associated regions:")
+        for e in regions_list:
+            logger.debug("\t%s", e)
 
         for e in expected_regions_list:
             assert e in regions_list  

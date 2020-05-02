@@ -323,6 +323,13 @@ def compute_zones(B, O, R, volumestokeep):
 
     # C/ Create regions dict from arrays dict
     regions_dict = get_regions_dict(arrays_dict, outfiles_volumes)
+    logger.debug("Regions dict:")
+    for k in sorted(list(regions_dict.keys())):
+        v = regions_dict[k]
+        logger.debug("key %s", k)
+        for e in v:
+            logger.debug("\t%s", e)
+    logger.debug("---\n")
 
     logger.debug("-----------------End Compute zones-----------------")
     return arrays_dict, regions_dict
