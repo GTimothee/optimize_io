@@ -248,6 +248,7 @@ def get_used_proxies(graph):
     origarr_to_blocks_shape = dict()
     proxy_to_dict = dict()
 
+    logger.info("Computing simpler graph from dask low-level graph")
     remade_graph = get_graph_from_dask(graph, undirected=False)
     
     log_file_path = os.path.join('/tmp', 'dask_io_input_graph.log')

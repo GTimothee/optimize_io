@@ -1,8 +1,14 @@
-from dask_io.optimizer.optimizer import optimize_func
+from dask_io.optimizer.optimizer import optimize_func, keep_algorithm
 import dask 
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+def enable_keep():
+    dask.config.set({
+        'optimizations': [keep_algorithm]
+    })
 
 
 def enable_clustering(buffer_size, mem_limit=True):
