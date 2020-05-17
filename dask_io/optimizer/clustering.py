@@ -57,6 +57,10 @@ def get_load_strategy(
     if (buffer_mem_size < block_mem_size):
         msg = "Not enough memory to store one block!"
         print(msg)
+        print(f'[debug] Buffer size: {buffer_mem_size}')
+        print(f'[debug] Chunk size: {block_mem_size}')
+        print(f'[debug] Chunk shape: {cs}')
+        print(f'[debug] Nb bytes/voxel: {nb}')
         raise ValueError(msg)
     max_blocks_per_load = math.floor(buffer_mem_size / block_mem_size)
 
