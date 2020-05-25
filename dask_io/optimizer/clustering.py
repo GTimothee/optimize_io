@@ -9,7 +9,7 @@ import operator
 from operator import getitem
 
 from dask_io.optimizer.utils.array_utils import get_arr_shapes
-from dask_io.optimizer.utils.utils import neat_print_graph, ONE_GIG
+from dask_io.optimizer.utils.utils import neat_print_graph, ONE_GIG, numeric_to_3d_pos, _3d_to_numeric_pos
 from dask_io.optimizer.find_proxies import add_to_dict_of_lists
 
 logger = logging.getLogger(__name__)
@@ -57,6 +57,10 @@ def get_load_strategy(
     if (buffer_mem_size < block_mem_size):
         msg = "Not enough memory to store one block!"
         print(msg)
+        print(f'[debug] Buffer size: {buffer_mem_size}')
+        print(f'[debug] Chunk size: {block_mem_size}')
+        print(f'[debug] Chunk shape: {cs}')
+        print(f'[debug] Nb bytes/voxel: {nb}')
         raise ValueError(msg)
     max_blocks_per_load = math.floor(buffer_mem_size / block_mem_size)
 
@@ -103,8 +107,8 @@ def overlap_slice(curr_buff, buff, blocks_shape):
     """
     end_of_buffer = curr_buff[-1]
     start_of_row = buff[0]
-    i_1 = numeric_to_3d_pos(end_of_buffer, blocks_shape, order='C')[0]
-    i_2 = numeric_to_3d_pos(start_of_row, blocks_shape, order='C')[0]
+    i_1 = numeric_to_3d_pos(end_of_buffer, blocks_shape, order='F')[0]
+    i_2 = numeric_to_3d_pos(start_of_row, blocks_shape, order='F')[0]
     if i_1 != i_2:
         return True
     return False
@@ -292,7 +296,7 @@ def get_blocks_used(dicts, origarr_name, arr_obj, chunk_shape):
                 for z in z_range:
                     if (x, y, z) not in blocks_seen:
                         blocks_seen.append((x, y, z))
-                        num_pos = _3d_to_numeric_pos((x, y, z), blocks_shape, 'C')
+                        num_pos = _3d_to_numeric_pos((x, y, z), blocks_shape, 'F')
                         logger.debug(f'Associated {num_pos} to {(x, y, z)} using block shape: {blocks_shape}')
                         blocks_used.append(num_pos)
                         block_to_proxies = add_to_dict_of_lists(block_to_proxies, num_pos, proxy_key, unique=True)
@@ -371,7 +375,7 @@ def get_buffer_slices_from_original_array(load, shape, original_array_chunk):
         numeric_to_3d_pos(
             num_pos,
             shape,
-            order='C') for num_pos in all_block_num_indexes]
+            order='F') for num_pos in all_block_num_indexes]
 
     mini = [None, None, None]
     maxi = [None, None, None]
@@ -397,7 +401,7 @@ def origarr_to_buffer_slices(dicts, proxy, buffer_key, slices, chunk_shape):
     img_nb_blocks_per_dim = dicts['origarr_to_blocks_shape'][origarr_name]
 
     block_id, start_block, end_block = buffer_key
-    start_pos = numeric_to_3d_pos(start_block, img_nb_blocks_per_dim, 'C')
+    start_pos = numeric_to_3d_pos(start_block, img_nb_blocks_per_dim, 'F')
     offset = [x * i for x, i in zip(start_pos, chunk_shape)]
 
     new_slices = list()
@@ -409,33 +413,4 @@ def origarr_to_buffer_slices(dicts, proxy, buffer_key, slices, chunk_shape):
     return slices
 
 
-def numeric_to_3d_pos(numeric_pos, blocks_shape, order):
-    if order == 'F':
-        nb_blocks_per_row = blocks_shape[0]
-        nb_blocks_per_slice = blocks_shape[0] * blocks_shape[1]
-    elif order == 'C':
-        nb_blocks_per_row = blocks_shape[2]
-        nb_blocks_per_slice = blocks_shape[1] * blocks_shape[2]
-    else:
-        raise ValueError("unsupported")
 
-    i = math.floor(numeric_pos / nb_blocks_per_slice)
-    numeric_pos -= i * nb_blocks_per_slice
-    j = math.floor(numeric_pos / nb_blocks_per_row)
-    numeric_pos -= j * nb_blocks_per_row
-    k = numeric_pos
-    return (i, j, k)
-
-
-def _3d_to_numeric_pos(_3d_pos, shape, order):
-    if order == 'F':
-        nb_blocks_per_row = shape[0]
-        nb_blocks_per_slice = shape[0] * shape[1]
-    elif order == 'C':
-        nb_blocks_per_row = shape[2]
-        nb_blocks_per_slice = shape[1] * shape[2]
-    else:
-        raise ValueError("unsupported")
-
-    return (_3d_pos[0] * nb_blocks_per_slice) + \
-        (_3d_pos[1] * nb_blocks_per_row) + _3d_pos[2]

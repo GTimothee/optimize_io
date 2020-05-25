@@ -37,9 +37,8 @@ def clustered_optimization(graph):
     return graph
 
 
-def optimize_func(dsk, keys):
+def optimize_func(dsk, keys): # TODO: change function name
     """ Apply an optimization on the dask graph.
-    Main function of the library. 
 
     Arguments:
     ----------
@@ -61,4 +60,11 @@ def optimize_func(dsk, keys):
         for k, v in dask_graph.items():    
             f.write("\n\n " + str(k))
             f.write("\n" + str(v))
+    return dsk
+
+
+def keep_algorithm(dsk, keys):
+    print("Inside the keep algorithm")
+    dask_graph = dsk.dicts
+    chunk_shape, dicts = get_used_proxies(dask_graph)
     return dsk

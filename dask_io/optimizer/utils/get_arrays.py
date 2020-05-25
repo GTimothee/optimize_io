@@ -52,6 +52,7 @@ def get_dataset(file_path, dataset_key):
     if not file_in_list(f, SOURCE_FILES):
         SOURCE_FILES.append(f)
 
+    print("Loading file...")
     inspect_h5py_file(f)
 
     return f[dataset_key]

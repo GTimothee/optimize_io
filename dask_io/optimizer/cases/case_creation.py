@@ -109,8 +109,8 @@ def split_hdf5_multiple(arr, out_dirpath, nb_blocks, file_list):
 
     datasets = list()
     arr_list = list()
-    for k, arr_block in arr_dict.items():
-        i, j, k = k
+    for key, arr_block in arr_dict.items():
+        i, j, k = key
         filename = f'{i}_{j}_{k}.hdf5'
         filepath = os.path.join(out_dirpath, filename)
         if os.path.isfile(filepath):
