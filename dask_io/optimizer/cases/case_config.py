@@ -2,6 +2,7 @@ import os, h5py
 import dask.array as da
 from dask_io.optimizer.utils.get_arrays import get_dask_array_from_hdf5
 from dask_io.optimizer.cases.case_creation import sum_chunks_case, split_to_hdf5, split_hdf5_multiple, merge_hdf5_multiple
+from dask_io.optimizer.utils.get_arrays import clean_files
 
 import logging
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ class Merge():
                     f = self.case['params']['out_file']
                     if f:
                         f.close()
+                    clean_files()
                 except:
                     pass
 
@@ -194,6 +196,7 @@ class Split():
                     f = self.case['params']['out_file']
                     if f:
                         f.close()
+                    clean_files()
                 except:
                     pass
             elif name == 'split_hdf5_multiple':
@@ -201,5 +204,6 @@ class Split():
                     try:
                         if f:
                             f.close()
+                        clean_files()
                     except:
                         pass
