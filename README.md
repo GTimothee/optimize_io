@@ -18,6 +18,13 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
+## Troubleshooting
+### If there are missing dependencies when creating the conda environment
+- 1) Create a new conda environement ``` conda create --name <envname> ```
+- 2) activate the environment ``` conda activate <envname> ```
+- 3) 'cd' inside the dask_io directory (where the requirements_conda.txt file is)
+- 4) install the dependencies that are not missing ``` while read requirement; do conda install --yes $requirement; done < requirements_conda.txt ```
+
 ## Note for developers
 To create the requirements_conda file:
 ```
